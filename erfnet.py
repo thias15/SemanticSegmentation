@@ -66,13 +66,13 @@ def downsampler(inputs, output_depth, is_training=True, scope='downsampler'):
     #Concatenated output
     net = tf.concat([net_conv, net_pool], axis=3, name=scope+'_concat')
 
-    net = slim.batch_norm(net_conv, is_training=is_training, fused=None, scope=scope+'_batch_norm')
+    net = slim.batch_norm(net, is_training=is_training, fused=None, scope=scope+'_batch_norm')
     net = tf.nn.relu(net, name=scope+'_relu')
 
     return net
 
 @slim.add_arg_scope
-def upsampler(inputs, output_depth, is_training=True, scope='downsampler'):
+def upsampler(inputs, output_depth, is_training=True, scope='upsampler'):
     '''
     INPUTS:
     - inputs(Tensor): A 4D tensor of shape [batch_size, height, width, channels]
@@ -81,18 +81,9 @@ def upsampler(inputs, output_depth, is_training=True, scope='downsampler'):
     OUTPUTS:
     - net_concatenated(Tensor): a 4D Tensor that contains the 
     '''
-    input_shape = inputs.get_shape().as_list()
-    input_depth = input_shape[-1]
 
-    #Convolutional branch
-    net_conv = slim.conv2d(inputs, output_depth-input_depth, [3,3], stride=2, activation_fn=None, scope=scope+'_conv')
-
-    #Max pool branch
-    net_pool = slim.max_pool2d(inputs, [2,2], stride=2, scope=scope+'_max_pool')
-
-    #Concatenated output
-    net = tf.concat([net_conv, net_pool], axis=3, name=scope+'_concat')
-
+    #Deconvolution
+    net_conv = slim.conv2d_transpose(inputs, output_depth, [3,3], stride=2, activation_fn=None, scope=scope+'_deconv')
     net = slim.batch_norm(net_conv, is_training=is_training, fused=None, scope=scope+'_batch_norm')
     net = tf.nn.relu(net, name=scope+'_relu')
 
@@ -160,22 +151,16 @@ def non_bottleneck(inputs,
 def ErfNet(inputs,
          num_classes,
          batch_size,
-         num_initial_blocks=1,
-         stage_two_repeat=2,
-         skip_connections=True,
          reuse=None,
          is_training=True,
-         scope='ENet'):
+         scope='ErfNet'):
     '''
-    The ENet model for real-time semantic segmentation!
+    The ErfNet model for real-time semantic segmentation!
 
     INPUTS:
     - inputs(Tensor): a 4D Tensor of shape [batch_size, image_height, image_width, num_channels] that represents one batch of preprocessed images.
     - num_classes(int): an integer for the number of classes to predict. This will determine the final output channels as the answer.
     - batch_size(int): the batch size to explictly set the shape of the inputs in order for operations to work properly.
-    - num_initial_blocks(int): the number of times to repeat the initial block.
-    - stage_two_repeat(int): the number of times to repeat stage two in order to make the network deeper.
-    - skip_connections(bool): if True, add the corresponding encoder feature maps to the decoder. They are of exact same shapes.
     - reuse(bool): Whether or not to reuse the variables for evaluation.
     - is_training(bool): if True, switch on batch_norm and prelu only during training, otherwise they are turned off.
     - scope(str): a string that represents the scope name for the variables.
@@ -190,99 +175,37 @@ def ErfNet(inputs,
 
     with tf.variable_scope(scope, reuse=reuse):
         #Set the primary arg scopes. Fused batch_norm is faster than normal batch norm.
-        with slim.arg_scope([initial_block, bottleneck], is_training=is_training),\
+        with slim.arg_scope([downsampler, upsampler, non_bottleneck], is_training=is_training),\
              slim.arg_scope([slim.batch_norm], fused=True), \
              slim.arg_scope([slim.conv2d, slim.conv2d_transpose], activation_fn=None): 
-            #=================INITIAL BLOCK=================
-            for i in xrange(1, max(num_initial_blocks, 1) + 1):
-                net = initial_block(inputs, scope='initial_block_' + str(i))
+            #=================START=================
+            net = downsampler(inputs, output_depth=16, is_training=True, scope='downsampler_1')
+	    net = downsampler(net, output_depth=64, is_training=True, scope='downsampler_2')
 
-            #Save for skip connection later
-            if skip_connections:
-                net_one = net
+	    for i in range(3, 8):    #5 times
+	        net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0.03, scope='non_bottleneck_'+str(i))
 
-            #===================STAGE ONE=======================
-            net, pooling_indices_1, inputs_shape_1 = bottleneck(net, output_depth=64, filter_size=3, regularizer_prob=0.01, downsampling=True, scope='bottleneck1_0')
-            net = bottleneck(net, output_depth=64, filter_size=3, regularizer_prob=0.01, scope='bottleneck1_1')
-            net = bottleneck(net, output_depth=64, filter_size=3, regularizer_prob=0.01, scope='bottleneck1_2')
-            net = bottleneck(net, output_depth=64, filter_size=3, regularizer_prob=0.01, scope='bottleneck1_3')
-            net = bottleneck(net, output_depth=64, filter_size=3, regularizer_prob=0.01, scope='bottleneck1_4')
+	    net = downsampler(net, output_depth=128, is_training=True, scope='downsampler_8')
 
-            #Save for skip connection later
-            if skip_connections:
-                net_two = net
+	    for i in range(0, 2):    #2 times
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=2,regularizer_prob=0.3, scope='non_bottleneck_'+str(9+i*4))
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=4,regularizer_prob=0.3, scope='non_bottleneck_'+str(10+i*4))
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=8,regularizer_prob=0.3, scope='non_bottleneck_'+str(11+i*4))
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=16,regularizer_prob=0.3, scope='non_bottleneck_'+str(12+i*4))
 
-            #regularization prob is 0.1 from bottleneck 2.0 onwards
-            with slim.arg_scope([bottleneck], regularizer_prob=0.1):
-                net, pooling_indices_2, inputs_shape_2 = bottleneck(net, output_depth=128, filter_size=3, downsampling=True, scope='bottleneck2_0')
-                
-                #Repeat the stage two at least twice to get stage 2 and 3:
-                for i in xrange(2, max(stage_two_repeat, 2) + 2):
-                    net = bottleneck(net, output_depth=128, filter_size=3, scope='bottleneck'+str(i)+'_1')
-                    net = bottleneck(net, output_depth=128, filter_size=3, dilated=True, dilation_rate=2, scope='bottleneck'+str(i)+'_2')
-                    net = bottleneck(net, output_depth=128, filter_size=5, asymmetric=True, scope='bottleneck'+str(i)+'_3')
-                    net = bottleneck(net, output_depth=128, filter_size=3, dilated=True, dilation_rate=4, scope='bottleneck'+str(i)+'_4')
-                    net = bottleneck(net, output_depth=128, filter_size=3, scope='bottleneck'+str(i)+'_5')
-                    net = bottleneck(net, output_depth=128, filter_size=3, dilated=True, dilation_rate=8, scope='bottleneck'+str(i)+'_6')
-                    net = bottleneck(net, output_depth=128, filter_size=5, asymmetric=True, scope='bottleneck'+str(i)+'_7')
-                    net = bottleneck(net, output_depth=128, filter_size=3, dilated=True, dilation_rate=16, scope='bottleneck'+str(i)+'_8')
+	    net = upsampler(net, output_depth=64, is_training=True, scope='upsampler_17')
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_18')
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_19')
 
-            with slim.arg_scope([bottleneck], regularizer_prob=0.1, decoder=True):
-                #===================STAGE FOUR========================
-                bottleneck_scope_name = "bottleneck" + str(i + 1)
+	    net = upsampler(net, output_depth=16, is_training=True, scope='upsampler_20')
+	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_21')
+	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_22')
 
-                #The decoder section, so start to upsample.
-                net = bottleneck(net, output_depth=64, filter_size=3, upsampling=True,
-                                 pooling_indices=pooling_indices_2, output_shape=inputs_shape_2, scope=bottleneck_scope_name+'_0')
+	    logits = upsampler(net, output_depth=num_classes, is_training=True, scope='upsampler_23')
 
-                #Perform skip connections here
-                if skip_connections:
-                    net = tf.add(net, net_two, name=bottleneck_scope_name+'_skip_connection')
+            #=============END=============
 
-                net = bottleneck(net, output_depth=64, filter_size=3, scope=bottleneck_scope_name+'_1')
-                net = bottleneck(net, output_depth=64, filter_size=3, scope=bottleneck_scope_name+'_2')
-
-                #===================STAGE FIVE========================
-                bottleneck_scope_name = "bottleneck" + str(i + 2)
-
-                net = bottleneck(net, output_depth=16, filter_size=3, upsampling=True,
-                                 pooling_indices=pooling_indices_1, output_shape=inputs_shape_1, scope=bottleneck_scope_name+'_0')
-
-                #perform skip connections here
-                if skip_connections:
-                    net = tf.add(net, net_one, name=bottleneck_scope_name+'_skip_connection')
-
-                net = bottleneck(net, output_depth=16, filter_size=3, scope=bottleneck_scope_name+'_1')
-
-            #=============FINAL CONVOLUTION=============
-            logits = slim.conv2d_transpose(net, num_classes, [2,2], stride=2, scope='fullconv')
             probabilities = tf.nn.softmax(logits, name='logits_to_softmax')
 
         return logits, probabilities
 
-
-def ENet_arg_scope(weight_decay=2e-4,
-                   batch_norm_decay=0.1,
-                   batch_norm_epsilon=0.001):
-  '''
-  The arg scope for enet model. The weight decay is 2e-4 as seen in the paper.
-  Batch_norm decay is 0.1 (momentum 0.1) according to official implementation.
-
-  INPUTS:
-  - weight_decay(float): the weight decay for weights variables in conv2d and separable conv2d
-  - batch_norm_decay(float): decay for the moving average of batch_norm momentums.
-  - batch_norm_epsilon(float): small float added to variance to avoid dividing by zero.
-
-  OUTPUTS:
-  - scope(arg_scope): a tf-slim arg_scope with the parameters needed for xception.
-  '''
-  # Set weight_decay for weights in conv2d and separable_conv2d layers.
-  with slim.arg_scope([slim.conv2d],
-                      weights_regularizer=slim.l2_regularizer(weight_decay),
-                      biases_regularizer=slim.l2_regularizer(weight_decay)):
-
-    # Set parameters for batch_norm.
-    with slim.arg_scope([slim.batch_norm],
-                        decay=batch_norm_decay,
-                        epsilon=batch_norm_epsilon) as scope:
-      return scope

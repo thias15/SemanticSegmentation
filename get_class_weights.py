@@ -40,8 +40,9 @@ def ENet_weighing(image_files=image_files, num_classes=12):
         class_weight = 1 / np.log(1.02 + (frequency / total_frequency))
         class_weights.append(class_weight)
 
-    #Set the last class_weight to 0.0
+    #Set the background class_weight to 0.0
     #class_weights[-1] = 0.0
+    class_weights[2] = 0.0
 
     return class_weights
 
@@ -93,8 +94,9 @@ def median_frequency_balancing(image_files=image_files, num_classes=12):
         median_frequency_balanced = median_frequency / total_frequency
         class_weights.append(median_frequency_balanced)
 
-    #Set the last class_weight to 0.0 as it's the background class
+    #Set the background class_weight to 0.0
     #class_weights[-1] = 0.0
+    class_weights[2] = 0.0
 
     return class_weights
 

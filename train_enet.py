@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib.framework.python.ops.variables import get_or_create_global_step
 from tensorflow.python.platform import tf_logging as logging
 from enet import ENet, ENet_arg_scope, ENet_Small
+from erfnet import ErfNet
 from preprocessing import preprocess
 from get_class_weights import ENet_weighing, median_frequency_balancing
 import os
@@ -170,7 +171,7 @@ def run():
                                          num_initial_blocks=num_initial_blocks,
                                          stage_two_repeat=stage_two_repeat,
                                          skip_connections=skip_connections)
-	    '''
+
 
             logits, probabilities = ENet_Small(images,
                                          num_classes,
@@ -179,6 +180,13 @@ def run():
                                          reuse=None,
                                          num_initial_blocks=num_initial_blocks,
                                          skip_connections=skip_connections)
+	    '''
+
+            logits, probabilities = ErfNet(images,
+                                         num_classes,
+                                         batch_size=batch_size,
+                                         is_training=True,
+                                         reuse=None)
 
         #perform one-hot-encoding on the ground truth annotation to get same shape as the logits
         annotations = tf.reshape(annotations, shape=[batch_size, image_height, image_width])
@@ -253,7 +261,7 @@ def run():
                                                  num_initial_blocks=num_initial_blocks,
                                                  stage_two_repeat=stage_two_repeat,
                                                  skip_connections=skip_connections)
-	    '''
+
             logits_val, probabilities_val = ENet_Small(images_val,
                                          num_classes,
                                          batch_size=eval_batch_size,
@@ -261,6 +269,14 @@ def run():
                                          reuse=True,
                                          num_initial_blocks=num_initial_blocks,
                                          skip_connections=skip_connections)
+
+	    '''
+
+            logits_val, probabilities_val = ErfNet(images_val,
+                                         num_classes,
+                                         batch_size=eval_batch_size,
+                                         is_training=True,
+                                         reuse=True)
 
         #perform one-hot-encoding on the ground truth annotation to get same shape as the logits
         annotations_val = tf.cast(annotations_val, dtype=tf.int32)
