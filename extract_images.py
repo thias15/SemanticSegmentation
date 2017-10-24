@@ -100,7 +100,7 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'Weather8'
+  name = 'Weather1' #1,3,6,8
   base_dir = './dataset/Carla/'
   path = base_dir + name + '/'
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
   testAnnotPath = base_dir + 'testannot/'
   files = [os.path.join(path, f) for f in glob.glob1(path, "data_*.h5")]
   
-  h5_last = 99
+  h5_last = 500
   bRGB = False
   bSeg = True
   number_of_seg_classes = 13

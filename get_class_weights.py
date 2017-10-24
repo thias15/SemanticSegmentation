@@ -42,7 +42,7 @@ def ENet_weighing(image_files=image_files, num_classes=12):
 
     #Set the background class_weight to 0.0
     #class_weights[-1] = 0.0
-    class_weights[2] = 0.0
+    #class_weights[2] = 0.0
 
     return class_weights
 
@@ -96,7 +96,7 @@ def median_frequency_balancing(image_files=image_files, num_classes=12):
 
     #Set the background class_weight to 0.0
     #class_weights[-1] = 0.0
-    class_weights[2] = 0.0
+    #class_weights[2] = 0.0
 
     return class_weights
 
