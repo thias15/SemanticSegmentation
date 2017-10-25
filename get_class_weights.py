@@ -3,20 +3,21 @@ import os
 from scipy.misc import imread
 import ast
 
-image_dir = "./dataset/CamVid/trainannot"
-image_files = [os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')]
 
-def ENet_weighing(image_files=image_files, num_classes=12):
+def ENet_weighing(image_dir="./dataset/Carla/trainannot", num_classes=12):
     '''
     The custom class weighing function as seen in the ENet paper.
 
     INPUTS:
-    - image_files(list): a list of image_filenames which element can be read immediately
+    - image_dir(string): the directory with training annotations
 
     OUTPUTS:
     - class_weights(list): a list of class weights where each index represents each class label and the element is the class weight for that label.
 
     '''
+    #Get images - image_files(list): a list of image_filenames which element can be read immediately
+    image_files = [os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')]
+    
     #initialize dictionary with all 0
     label_to_frequency = {}
     for i in xrange(num_classes):
@@ -46,7 +47,7 @@ def ENet_weighing(image_files=image_files, num_classes=12):
 
     return class_weights
 
-def median_frequency_balancing(image_files=image_files, num_classes=12):
+def median_frequency_balancing(image_dir="./dataset/Carla/trainannot", num_classes=12):
     '''
     Perform median frequency balancing on the image files, given by the formula:
     f = Median_freq_c / total_freq_c
@@ -55,13 +56,16 @@ def median_frequency_balancing(image_files=image_files, num_classes=12):
     and total_freq_c is the total number of pixels of c in the total pixels of the images where c appeared.
 
     INPUTS:
-    - image_files(list): a list of image_filenames which element can be read immediately
+    - image_dir(string): the directory with training annotations
     - num_classes(int): the number of classes of pixels in all images
 
     OUTPUTS:
     - class_weights(list): a list of class weights where each index represents each class label and the element is the class weight for that label.
 
     '''
+    #Get images - image_files(list): a list of image_filenames which element can be read immediately
+    image_files = [os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')]
+
     #Initialize all the labels key with a list value
     label_to_frequency_dict = {}
     for i in xrange(num_classes):
