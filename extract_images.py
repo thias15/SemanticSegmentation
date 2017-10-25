@@ -100,7 +100,7 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'Weather1' #1,3,6,8
+  name = 'Weather8' #1,3,6,8
   base_dir = './dataset/Carla/'
   path = base_dir + name + '/'
 

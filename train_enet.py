@@ -15,12 +15,13 @@ slim = tf.contrib.slim
 flags = tf.app.flags
 
 #Directory arguments
-flags.DEFINE_string('dataset_dir', './dataset/CamVid', 'The dataset directory to find the train, validation and test images.')
-flags.DEFINE_string('logdir', './log/CamVid', 'The log directory to save your checkpoint and event files.')
+flags.DEFINE_string('dataset_dir', './dataset/Carla', 'The dataset directory to find the train, validation and test images.')
+flags.DEFINE_string('logdir', './log/Carla', 'The log directory to save your checkpoint and event files.')
 flags.DEFINE_boolean('save_images', True, 'Whether or not to save your images.')
 flags.DEFINE_boolean('combine_dataset', False, 'If True, combines the validation with the train dataset.')
 
 #Training arguments
+flags.DEFINE_string('network', 'ENet_Small', 'The type of network to use.') 
 flags.DEFINE_integer('num_classes', 5, 'The number of classes to predict.') #12
 flags.DEFINE_integer('batch_size', 10, 'The batch_size for training.') #10
 flags.DEFINE_integer('eval_batch_size', 20, 'The batch size used for validation.') #25
@@ -45,6 +46,7 @@ flags.DEFINE_boolean('skip_connections', False, 'If True, perform skip connectio
 FLAGS = flags.FLAGS
 
 #==========NAME HANDLING FOR CONVENIENCE==============
+network = FLAGS.network
 num_classes = FLAGS.num_classes
 batch_size = FLAGS.batch_size
 image_height = FLAGS.image_height
@@ -162,8 +164,10 @@ def run():
 
         #Create the model inference
         with slim.arg_scope(ENet_arg_scope(weight_decay=weight_decay)):
-	    '''
-            logits, probabilities = ENet(images,
+
+	    if (network == 'ENet'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ENet(images,
                                          num_classes,
                                          batch_size=batch_size,
                                          is_training=True,
@@ -172,17 +176,19 @@ def run():
                                          stage_two_repeat=stage_two_repeat,
                                          skip_connections=skip_connections)
 
-
-            logits, probabilities = ENet_Small(images,
+	    if (network == 'ENet_Small'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ENet_Small(images,
                                          num_classes,
                                          batch_size=batch_size,
                                          is_training=True,
                                          reuse=None,
                                          num_initial_blocks=num_initial_blocks,
                                          skip_connections=skip_connections)
-	    '''
 
-            logits, probabilities = ErfNet(images,
+	    if (network == 'ErfNet'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ErfNet(images,
                                          num_classes,
                                          batch_size=batch_size,
                                          is_training=True,
@@ -252,8 +258,9 @@ def run():
         images_val, annotations_val = tf.train.batch([preprocessed_image_val, preprocessed_annotation_val], batch_size=eval_batch_size, allow_smaller_final_batch=True)
 
         with slim.arg_scope(ENet_arg_scope(weight_decay=weight_decay)):
-	    '''
-            logits_val, probabilities_val = ENet(images_val,
+	    if (network == 'ENet'):
+
+                logits_val, probabilities_val = ENet(images_val,
                                                  num_classes,
                                                  batch_size=eval_batch_size,
                                                  is_training=True,
@@ -261,8 +268,9 @@ def run():
                                                  num_initial_blocks=num_initial_blocks,
                                                  stage_two_repeat=stage_two_repeat,
                                                  skip_connections=skip_connections)
+	    if (network == 'ENet_Small'):
 
-            logits_val, probabilities_val = ENet_Small(images_val,
+                logits_val, probabilities_val = ENet_Small(images_val,
                                          num_classes,
                                          batch_size=eval_batch_size,
                                          is_training=True,
@@ -270,9 +278,9 @@ def run():
                                          num_initial_blocks=num_initial_blocks,
                                          skip_connections=skip_connections)
 
-	    '''
+	    if (network == 'ErfNet'):
 
-            logits_val, probabilities_val = ErfNet(images_val,
+                logits_val, probabilities_val = ErfNet(images_val,
                                          num_classes,
                                          batch_size=eval_batch_size,
                                          is_training=True,
