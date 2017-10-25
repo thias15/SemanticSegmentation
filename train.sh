@@ -1,4 +1,4 @@
-python train_enet.py --dataset_dir="./dataset/Carla" --weighting="MFB" --network="ErfNet" --num_epochs=100 --logdir="./log/train_Carla_MFB_ErfNet_Small_Test"
+python train_enet.py --dataset_name="Carla" --weighting="MFB" --network="ENet_Small" --num_epochs=100
 
 
 #python train_enet.py --dataset_dir="./dataset/CamVid" --weighting="MFB" --num_epochs=500 --logdir="./log/train_MFB_combined_data" --combine_dataset=True
