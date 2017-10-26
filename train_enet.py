@@ -24,15 +24,15 @@ flags.DEFINE_boolean('combine_dataset', False, 'If True, combines the validation
 #Training arguments
 flags.DEFINE_string('network', 'ENet_Small', 'The type of network to use.') 
 flags.DEFINE_integer('num_classes', 5, 'The number of classes to predict.') #12
-flags.DEFINE_integer('batch_size', 10, 'The batch_size for training.') #10
+flags.DEFINE_integer('batch_size', 50, 'The batch_size for training.') #10
 flags.DEFINE_integer('eval_batch_size', 20, 'The batch size used for validation.') #25
 flags.DEFINE_integer('image_height', 88, "The input height of the images.") #360
 flags.DEFINE_integer('image_width', 200, "The input width of the images.") #480
-flags.DEFINE_integer('num_epochs', 300, "The number of epochs to train your model.")
-flags.DEFINE_integer('num_epochs_before_decay', 100, 'The number of epochs before decaying your learning rate.')
+flags.DEFINE_integer('num_epochs', 100, "The number of epochs to train your model.")
+flags.DEFINE_integer('num_epochs_before_decay', 10, 'The number of epochs before decaying your learning rate.') #100
 flags.DEFINE_float('weight_decay', 2e-4, "The weight decay for ENet convolution layers.")
 flags.DEFINE_float('learning_rate_decay_factor', 1e-1, 'The learning rate decay factor.')
-flags.DEFINE_float('initial_learning_rate', 5e-4, 'The initial learning rate for your training.')
+flags.DEFINE_float('initial_learning_rate', 5e-5, 'The initial learning rate for your training.') #5e-4
 flags.DEFINE_string('weighting', "MFB", 'Choice of Median Frequency Balancing or the custom ENet class weights.')
 flags.DEFINE_string('checkpoint_step', 5000, 'Number of steps between checkpoints.')
 flags.DEFINE_string('log_step', 100, 'Number of steps between logs.')
@@ -82,7 +82,7 @@ photo_dir = os.path.join(FLAGS.logdir, "images")
 
 #Directories
 dataset_dir = os.path.join(FLAGS.dataset_dir, FLAGS.dataset_name)
-logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting)
+logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + FLAGS.initial_learning_rate '_bs_' + FLAGS.batch_size)
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
