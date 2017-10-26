@@ -82,7 +82,7 @@ photo_dir = os.path.join(FLAGS.logdir, "images")
 
 #Directories
 dataset_dir = os.path.join(FLAGS.dataset_dir, FLAGS.dataset_name)
-logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + FLAGS.initial_learning_rate + '_bs_' + FLAGS.batch_size)
+logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size))
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
