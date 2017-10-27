@@ -187,10 +187,10 @@ if __name__ == "__main__":
       #if (outdim == 3):
       	#Image.fromarray(segs_center[i]).convert('RGB').save("seg_" + str(i) + ".png")
       if (outdim == 1):
-	if rand<0.2:
+	if h_num < h5_last*0.2:
 	  Image.fromarray(rgb).save(testPath + name + "_rgb_" + str(i*(h_num+1)) + ".png")
       	  Image.fromarray(scene_seg).save(testAnnotPath + name + "_seg_" + str(i*(h_num+1)) + ".png") 
-	elif rand<0.4:
+	elif h_num < h5_last*0.4:
 	  Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i*(h_num+1)) + ".png")
       	  Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i*(h_num+1)) + ".png") 
 	else:
