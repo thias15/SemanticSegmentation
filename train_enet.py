@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib.framework.python.ops.variables import get_or_create_global_step
 from tensorflow.python.platform import tf_logging as logging
 from enet import ENet, ENet_arg_scope, ENet_Small
-from erfnet import ErfNet
+from erfnet import ErfNet, ErfNet_Small
 from preprocessing import preprocess
 from get_class_weights import ENet_weighing, median_frequency_balancing
 import os
@@ -83,6 +83,8 @@ photo_dir = os.path.join(FLAGS.logdir, "images")
 #Directories
 dataset_dir = os.path.join(FLAGS.dataset_dir, FLAGS.dataset_name)
 logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size))
+
+print(dataset_dir)
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
@@ -195,6 +197,14 @@ def run():
                                          is_training=True,
                                          reuse=None)
 
+	    if (network == 'ErfNet_Small'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ErfNet_Small(images,
+                                         num_classes,
+                                         batch_size=batch_size,
+                                         is_training=True,
+                                         reuse=None)
+
         #perform one-hot-encoding on the ground truth annotation to get same shape as the logits
         annotations = tf.reshape(annotations, shape=[batch_size, image_height, image_width])
         annotations_ohe = tf.one_hot(annotations, num_classes, axis=-1)
@@ -286,6 +296,15 @@ def run():
                                          batch_size=eval_batch_size,
                                          is_training=True,
                                          reuse=True)
+
+	    if (network == 'ErfNet_Small'):
+
+                logits_val, probabilities_val = ErfNet_Small(images_val,
+                                         num_classes,
+                                         batch_size=eval_batch_size,
+                                         is_training=True,
+                                         reuse=True)
+
 
         #perform one-hot-encoding on the ground truth annotation to get same shape as the logits
         annotations_val = tf.cast(annotations_val, dtype=tf.int32)

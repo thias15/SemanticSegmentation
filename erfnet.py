@@ -210,12 +210,12 @@ def ErfNet(inputs,
         return logits, probabilities
 
 
-def ErfNetSmall(inputs,
+def ErfNet_Small(inputs,
          num_classes,
          batch_size,
          reuse=None,
          is_training=True,
-         scope='ErfNet'):
+         scope='ErfNet_Small'):
     '''
     The ErfNet model for real-time semantic segmentation!
 
@@ -242,28 +242,22 @@ def ErfNetSmall(inputs,
              slim.arg_scope([slim.conv2d, slim.conv2d_transpose], activation_fn=None): 
             #=================START=================
             net = downsampler(inputs, output_depth=16, is_training=True, scope='downsampler_1')
-	    net = downsampler(net, output_depth=64, is_training=True, scope='downsampler_2')
 
-	    for i in range(3, 8):    #5 times
-	        net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0.03, scope='non_bottleneck_'+str(i))
+	    for i in range(2, 7):    #5 times
+	        net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0.03, scope='non_bottleneck_'+str(i))
 
-	    net = downsampler(net, output_depth=128, is_training=True, scope='downsampler_8')
+	    net = downsampler(net, output_depth=64, is_training=True, scope='downsampler_7')
 
-	    for i in range(0, 2):    #2 times
-	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=2,regularizer_prob=0.3, scope='non_bottleneck_'+str(9+i*4))
-	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=4,regularizer_prob=0.3, scope='non_bottleneck_'+str(10+i*4))
-	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=8,regularizer_prob=0.3, scope='non_bottleneck_'+str(11+i*4))
-	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=16,regularizer_prob=0.3, scope='non_bottleneck_'+str(12+i*4))
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=2,regularizer_prob=0.3, scope='non_bottleneck_8')
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=4,regularizer_prob=0.3, scope='non_bottleneck_9')
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=8,regularizer_prob=0.3, scope='non_bottleneck_10')
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=16,regularizer_prob=0.3, scope='non_bottleneck_11')
 
-	    net = upsampler(net, output_depth=64, is_training=True, scope='upsampler_17')
-	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_18')
-	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_19')
+	    net = upsampler(net, output_depth=16, is_training=True, scope='upsampler_12')
+	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_13')
+	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_14')
 
-	    net = upsampler(net, output_depth=16, is_training=True, scope='upsampler_20')
-	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_21')
-	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_22')
-
-	    logits = upsampler(net, output_depth=num_classes, is_training=True, scope='upsampler_23')
+	    logits = upsampler(net, output_depth=num_classes, is_training=True, scope='upsampler_15')
 
             #=============END=============
 
