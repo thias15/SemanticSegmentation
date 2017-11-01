@@ -4,6 +4,27 @@ from scipy.misc import imread
 import ast
 
 
+def CVPR_weighing():
+    '''
+    OUTPUTS:
+    - class_weights(list): a list of class weights where each index represents each class label and the element is the class weight for that label.
+
+    '''
+    
+    num_classes=5
+    #initialize dictionary with all 0
+    class_weights = []
+    for i in xrange(num_classes):
+        class_weights.append(0)
+
+    class_weights[0] = 5 #Pedestrian
+    class_weights[1] = 5 #Car
+    class_weights[2] = 1 #Background
+    class_weights[3] = 10 #Lanemarking/Sidewalk
+    class_weights[4] = 10 #Road
+
+    return class_weights
+
 def ENet_weighing(image_dir="./dataset/Carla/trainannot", num_classes=12):
     '''
     The custom class weighing function as seen in the ENet paper.

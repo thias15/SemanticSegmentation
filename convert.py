@@ -41,14 +41,15 @@ def _int64_feature(value):
 tfrecords_filename_train = dataset_dir + '_train.tfrecords'
 tfrecords_filename_val = dataset_dir + '_val.tfrecords'
 
-'''
+
 writer_train = tf.python_io.TFRecordWriter(tfrecords_filename_train)
 
 # Let's collect the real images to later on compare
 # to the reconstructed ones
-#original_images = []
+original_images = []
+check_num = 50
 
-for i in range(num_files_train/100):
+for i in range(num_files_train):
     if (i%1000 == 0):
       print ('Progress: %d of %d (%.f%%)' % (i, num_files_train, float(i*100/num_files_train)))
     img_path = image_files[i]
@@ -66,7 +67,8 @@ for i in range(num_files_train/100):
     
     # Put in the original images into array
     # Just for future check for correctness
-    #original_images.append((img, annotation))
+    if i<check_num:
+    	original_images.append((img, annotation))
     
     img_raw = img.tostring()
     annotation_raw = annotation.tostring()
@@ -80,16 +82,17 @@ for i in range(num_files_train/100):
     writer_train.write(example.SerializeToString())
 
 writer_train.close()
-'''
 
-'''
+
 ###Sanity check - Are the images identical?
 reconstructed_images = []
+i = 0
 
 record_iterator = tf.python_io.tf_record_iterator(path=tfrecords_filename_train)
 
 for string_record in record_iterator:
-    
+
+        
     example = tf.train.Example()
     example.ParseFromString(string_record)
     
@@ -119,6 +122,10 @@ for string_record in record_iterator:
     
     reconstructed_images.append((reconstructed_img, reconstructed_annotation))
 
+    i = i + 1
+    if i == check_num:
+        break
+
 # Let's check if the reconstructed images match
 # the original images
 
@@ -126,11 +133,8 @@ for original_pair, reconstructed_pair in zip(original_images, reconstructed_imag
     
     img_pair_to_compare, annotation_pair_to_compare = zip(original_pair,
                                                           reconstructed_pair)
-    print(np.allclose(*img_pair_to_compare))
-    print(np.allclose(*annotation_pair_to_compare))
-
-'''
-
+    print('Images identical: ', np.allclose(*img_pair_to_compare))
+    print('Annotations identical: ', np.allclose(*annotation_pair_to_compare))
 
 ###Validation
 num_files_val = len(image_val_files)

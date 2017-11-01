@@ -103,7 +103,7 @@ if __name__ == "__main__":
   name = 'CVPR1Noise' #'Weather8' #1,3,6,8
   base_dir = './dataset/CVPR1Noise/'
   #path = base_dir + name + '/'
-  path = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR1Noise/SeqTrain/'
+  path = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR5Noise/'
 
   trainPath = base_dir + 'train/'
   trainAnnotPath = base_dir + 'trainannot/'
@@ -114,7 +114,7 @@ if __name__ == "__main__":
   files = [os.path.join(path, f) for f in glob.glob1(path, "data_*.h5")]
 
   h5_start = 0
-  h5_last = 600
+  h5_last = 1000
   bRGB = False
   bSeg = True
   number_of_seg_classes = 5 #13
@@ -204,7 +204,7 @@ if __name__ == "__main__":
 	  Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
       	  Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
       '''
-      #Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
+      Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
       Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
       #Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i+h_num*200) + ".png")
       #Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
