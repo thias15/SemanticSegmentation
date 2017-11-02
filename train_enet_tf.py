@@ -34,7 +34,7 @@ flags.DEFINE_float('weight_decay', 2e-4, "The weight decay for ENet convolution 
 flags.DEFINE_float('learning_rate_decay_factor', 1e-1, 'The learning rate decay factor.')
 flags.DEFINE_float('initial_learning_rate', 5e-5, 'The initial learning rate for your training.') #5e-4
 flags.DEFINE_string('weighting', "MFB", 'Choice of Median Frequency Balancing or the custom ENet class weights.')
-flags.DEFINE_string('checkpoint_step', 5000, 'Number of steps between checkpoints.')
+flags.DEFINE_string('checkpoint_step', 10000, 'Number of steps between checkpoints.')
 flags.DEFINE_string('log_step', 100, 'Number of steps between logs.')
 flags.DEFINE_string('print_step', 50, 'Number of steps between prints.')
 flags.DEFINE_string('val_step', 100, 'Number of steps between validations.')
@@ -81,18 +81,20 @@ save_images = FLAGS.save_images
 photo_dir = os.path.join(FLAGS.logdir, "images")
 
 #Directories
-dataset_dir = os.path.join(FLAGS.dataset_dir, FLAGS.dataset_name)
+dataset_dir = FLAGS.dataset_dir
+dataset_name = FLAGS.dataset_name 
 logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size))
 
-print(dataset_dir)
+print(dataset_name)
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
-image_files = sorted([os.path.join(dataset_dir, 'train', file) for file in os.listdir(dataset_dir + "/train") if file.endswith('.png')])
-annotation_files = sorted([os.path.join(dataset_dir, "trainannot", file) for file in os.listdir(dataset_dir + "/trainannot") if file.endswith('.png')])
+image_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
+annotation_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
 
-image_val_files = sorted([os.path.join(dataset_dir, 'val', file) for file in os.listdir(dataset_dir + "/val") if file.endswith('.png')])
-annotation_val_files = sorted([os.path.join(dataset_dir, "valannot", file) for file in os.listdir(dataset_dir + "/valannot") if file.endswith('.png')])
+dataset_name = 'CVPRVal'
+image_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'val', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'valannot')) if file.endswith('.png')])
 
 if combine_dataset:
     image_files += image_val_files
@@ -106,12 +108,12 @@ decay_steps = int(num_epochs_before_decay * num_steps_per_epoch)
 #=================CLASS WEIGHTS===============================
 #Median frequency balancing class_weights
 if weighting == "MFB":
-    class_weights = median_frequency_balancing(image_dir = dataset_dir + '/trainannot', num_classes=num_classes)
+    class_weights = median_frequency_balancing(image_dir = os.path.join(dataset_dir, dataset_name, 'trainannot'), num_classes=num_classes)
     print "========= Median Frequency Balancing Class Weights =========\n", class_weights
 
 #Inverse weighing probability class weights
 elif weighting == "ENET":
-    class_weights = ENet_weighing(image_dir = dataset_dir + '/trainannot', num_classes=num_classes)
+    class_weights = ENet_weighing(image_dir = os.path.join(dataset_dir, dataset_name, 'trainannot'), num_classes=num_classes)
     print "========= ENet Class Weights =========\n", class_weights
 
 #Inverse weighing probability class weights

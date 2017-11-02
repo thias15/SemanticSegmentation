@@ -100,28 +100,30 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'CVPR1Noise' #'Weather8' #1,3,6,8
-  base_dir = './dataset/CVPR1Noise/'
-  #path = base_dir + name + '/'
-  path = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR5Noise/'
+  name = 'Carla2000'
+  dataset_dir = './dataset/'
+  in_dir = './dataset/Carla2000/Weather8/' #'/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR5Noise/SeqTrain/'
 
-  trainPath = base_dir + 'train/'
-  trainAnnotPath = base_dir + 'trainannot/'
-  valPath = base_dir + 'val/'
-  valAnnotPath = base_dir + 'valannot/'
-  testPath = base_dir + 'test/'
-  testAnnotPath = base_dir + 'testannot/'
-  files = [os.path.join(path, f) for f in glob.glob1(path, "data_*.h5")]
+  out_dir = dataset_dir + name + '/'
+
+
+  trainPath = out_dir + 'train/'
+  trainAnnotPath = out_dir + 'trainannot/'
+  valPath = out_dir + 'val/'
+  valAnnotPath = out_dir + 'valannot/'
+  testPath = out_dir + 'test/'
+  testAnnotPath = out_dir + 'testannot/'
+  files = [os.path.join(in_dir, f) for f in glob.glob1(in_dir, "data_*.h5")]
 
   h5_start = 0
-  h5_last = 1000
+  h5_last = 499
   bRGB = False
   bSeg = True
   number_of_seg_classes = 5 #13
   outdim = 1 
 
-  if not os.path.exists(base_dir):
-    os.mkdir(base_dir)
+  if not os.path.exists(out_dir):
+    os.mkdir(out_dir)
 
   if not os.path.exists(trainPath):
     os.mkdir(trainPath)
@@ -143,7 +145,7 @@ if __name__ == "__main__":
   for h_num in sequence_num:
 
     print " SEQUENCE NUMBER ",h_num
-    data = h5py.File(path+'data_'+ str(h_num).zfill(5) +'.h5', "r")
+    data = h5py.File(os.path.join(in_dir,'data_' + str(h_num).zfill(5) + '.h5'), "r")
     print(data['rgb'].shape)
     print(data['labels'].shape)
 
@@ -192,19 +194,19 @@ if __name__ == "__main__":
       #rand = random.random()
       #if (outdim == 3):
       	#Image.fromarray(segs_center[i]).convert('RGB').save("seg_" + str(i) + ".png")
-      '''
+      
       if (outdim == 1):
 	if h_num < h5_last*0.2:
-	  Image.fromarray(rgb).save(testPath + name + "_rgb_" + str(i+h_num*200) + ".png")
-      	  Image.fromarray(scene_seg).save(testAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
+	  Image.fromarray(rgb).save(testPath + name + "_rgb_" + str(i+h_num*200) + "_W8.png")
+      	  Image.fromarray(scene_seg).save(testAnnotPath + name + "_seg_" + str(i+h_num*200) + "_W8.png") 
 	elif h_num < h5_last*0.4:
-	  Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i+h_num*200) + ".png")
-      	  Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
+	  Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i+h_num*200) + "_W8.png")
+      	  Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i+h_num*200) + "_W8.png") 
 	else:
-	  Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
-      	  Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
-      '''
-      Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
-      Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
+	  Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + "_W8.png")
+      	  Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + "_W8.png") 
+      
+      #Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
+      #Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
       #Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i+h_num*200) + ".png")
       #Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
