@@ -92,9 +92,8 @@ print(dataset_name)
 image_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
 annotation_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
 
-dataset_name = 'CVPRVal'
-image_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'val', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'val')) if file.endswith('.png')])
-annotation_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'valannot')) if file.endswith('.png')])
+image_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'val', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'valannot')) if file.endswith('.png')])
 
 if combine_dataset:
     image_files += image_val_files
