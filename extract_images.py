@@ -100,9 +100,9 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'Carla2000'
+  name = 'CVPR02Noise'
   dataset_dir = './dataset/'
-  in_dir = './dataset/Carla2000/Weather8/' #'/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR5Noise/SeqTrain/'
+  in_dir = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR02Noise/SeqTrain/'
 
   out_dir = dataset_dir + name + '/'
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
   files = [os.path.join(in_dir, f) for f in glob.glob1(in_dir, "data_*.h5")]
 
   h5_start = 0
-  h5_last = 499
+  h5_last = 13500
   bRGB = False
   bSeg = True
   number_of_seg_classes = 5 #13
@@ -194,7 +194,7 @@ if __name__ == "__main__":
       #rand = random.random()
       #if (outdim == 3):
       	#Image.fromarray(segs_center[i]).convert('RGB').save("seg_" + str(i) + ".png")
-      
+      '''
       if (outdim == 1):
 	if h_num < h5_last*0.2:
 	  Image.fromarray(rgb).save(testPath + name + "_rgb_" + str(i+h_num*200) + "_W8.png")
@@ -205,8 +205,8 @@ if __name__ == "__main__":
 	else:
 	  Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + "_W8.png")
       	  Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + "_W8.png") 
-      
-      #Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
-      #Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
+      '''
+      Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
+      Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
       #Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i+h_num*200) + ".png")
       #Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 

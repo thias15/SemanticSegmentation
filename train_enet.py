@@ -357,7 +357,7 @@ def run():
         my_summary_op = tf.summary.merge_all()
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
-        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=10,keep_checkpoint_every_n_hours=1),init_fn=None)
+        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=20,keep_checkpoint_every_n_hours=8),init_fn=None)
 
         # Run the managed session
         with sv.managed_session() as sess:

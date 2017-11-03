@@ -1,7 +1,8 @@
 import tensorflow as tf
 from tensorflow.contrib.framework.python.ops.variables import get_or_create_global_step
 from tensorflow.python.platform import tf_logging as logging
-from enet import ENet, ENet_arg_scope
+from enet import ENet, ENet_arg_scope, ENet_Small
+from erfnet import ErfNet, ErfNet_Small
 from preprocessing import preprocess
 import os
 import time
@@ -13,12 +14,14 @@ slim = tf.contrib.slim
 flags = tf.app.flags
 
 #Directories
-flags.DEFINE_string('dataset_dir', './dataset/Carla', 'The dataset directory to find the train, validation and test images.')
+flags.DEFINE_string('dataset_dir', './dataset', 'The dataset base directory.')
+flags.DEFINE_string('dataset_name', 'CVPRTest', 'The dataset subdirectory to find the test images.')
 flags.DEFINE_string('checkpoint_dir', './log/train', 'The checkpoint directory to restore your model')
 flags.DEFINE_string('logdir', './log/test', 'The log directory for event files created during test evaluation.')
 flags.DEFINE_boolean('save_images', True, 'If True, saves 10 images to your logdir for visualization.')
 
 #Evaluation information
+flags.DEFINE_string('network', 'ENet_Small', 'The type of network to use.') 
 flags.DEFINE_integer('num_classes', 5, 'The number of classes to predict.') #12
 flags.DEFINE_integer('batch_size', 1, 'The batch_size for evaluation.') #10
 flags.DEFINE_integer('image_height', 88, "The input height of the images.") #360
@@ -33,6 +36,7 @@ flags.DEFINE_boolean('skip_connections', False, 'If True, perform skip connectio
 FLAGS = flags.FLAGS
 
 #==========NAME HANDLING FOR CONVENIENCE==============
+network = FLAGS.network
 num_classes = FLAGS.num_classes
 batch_size = FLAGS.batch_size
 image_height = FLAGS.image_height
@@ -47,6 +51,7 @@ stage_two_repeat = FLAGS.stage_two_repeat
 skip_connections = FLAGS.skip_connections
 
 dataset_dir = FLAGS.dataset_dir
+dataset_name = FLAGS.dataset_name
 checkpoint_dir = FLAGS.checkpoint_dir
 photo_dir = os.path.join(FLAGS.logdir, "images")
 logdir = FLAGS.logdir
@@ -56,8 +61,8 @@ logdir = FLAGS.logdir
 checkpoint_file = tf.train.latest_checkpoint(checkpoint_dir)
 
 #Dataset directories
-image_files = sorted([os.path.join(dataset_dir, 'test', file) for file in os.listdir(dataset_dir + "/test") if file.endswith('.png')])
-annotation_files = sorted([os.path.join(dataset_dir, "testannot", file) for file in os.listdir(dataset_dir + "/testannot") if file.endswith('.png')])
+image_files = sorted([os.path.join(dataset_dir, dataset_name, 'test', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'test')) if file.endswith('.png')])
+annotation_files = sorted([os.path.join(dataset_dir, dataset_name, "testannot", file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, "testannot")) if file.endswith('.png')])
 
 num_batches_per_epoch = len(image_files) / batch_size
 num_steps_per_epoch = num_batches_per_epoch
@@ -85,7 +90,9 @@ def run():
 
         #Create the model inference
         with slim.arg_scope(ENet_arg_scope()):
-            logits, probabilities = ENet(images,
+	    if (network == 'ENet'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ENet(images,
                                          num_classes,
                                          batch_size=batch_size,
                                          is_training=False,
@@ -93,6 +100,32 @@ def run():
                                          num_initial_blocks=num_initial_blocks,
                                          stage_two_repeat=stage_two_repeat,
                                          skip_connections=skip_connections)
+
+	    if (network == 'ENet_Small'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ENet_Small(images,
+                                         num_classes,
+                                         batch_size=batch_size,
+                                         is_training=False,
+                                         reuse=None,
+                                         num_initial_blocks=num_initial_blocks,
+                                         skip_connections=skip_connections)
+
+	    if (network == 'ErfNet'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ErfNet(images,
+                                         num_classes,
+                                         batch_size=batch_size,
+                                         is_training=False,
+                                         reuse=None)
+
+	    if (network == 'ErfNet_Small'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ErfNet_Small(images,
+                                         num_classes,
+                                         batch_size=batch_size,
+                                         is_training=False,
+                                         reuse=None)
 
         # Set up the variables to restore and restoring function from a saver.
         exclude = []
@@ -141,6 +174,10 @@ def run():
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
         sv = tf.train.Supervisor(logdir = logdir, summary_op = None, init_fn=restore_fn)
+	#Image directory
+	if save_images:
+	    if not os.path.exists(photo_dir):
+		os.mkdir(photo_dir)
 
         #Run the managed session
         with sv.managed_session() as sess:
@@ -157,6 +194,18 @@ def run():
                     test_accuracy, test_mean_IOU, test_per_class_accuracy = eval_step(sess, metrics_op = metrics_op, global_step = sv.global_step)
                     summaries = sess.run(my_summary_op)
                     sv.summary_computed(sess, summaries)
+
+                #Save image every 100 steps and continue evaluating
+                if step % 100 == 0:
+                    logging.info('Saving image...')
+		    predictions_val, annotations_val = sess.run([predictions, annotations])
+                    predicted_annotation = predictions_val[0]
+                    annotation = annotations_val[0]
+                    plt.subplot(1,2,1)
+                    plt.imshow(predicted_annotation)
+                    plt.subplot(1,2,2)
+                    plt.imshow(annotation)
+                    plt.savefig(photo_dir+"/image_" + str(step))
                     
                 #Otherwise just run as per normal
                 else:
@@ -170,24 +219,6 @@ def run():
             #Show end of evaluation
             logging.info('Finished evaluating!')
 
-            #Save the images
-            if save_images:
-                if not os.path.exists(photo_dir):
-                    os.mkdir(photo_dir)
-
-                #Save the image visualizations for the first 10 images.
-                logging.info('Saving the images now...')
-                predictions_val, annotations_val = sess.run([predictions, annotations])
-
-                for i in xrange(10):
-                    predicted_annotation = predictions_val[i]
-                    annotation = annotations_val[i]
-
-                    plt.subplot(1,2,1)
-                    plt.imshow(predicted_annotation)
-                    plt.subplot(1,2,2)
-                    plt.imshow(annotation)
-                    plt.savefig(photo_dir+"/image_" + str(i))
 
 if __name__ == '__main__':
     run()

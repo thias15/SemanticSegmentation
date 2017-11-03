@@ -1,4 +1,2 @@
-python test_enet.py --checkpoint_dir=./log/train_ENet --logdir=./log/test_ENet
-python test_enet.py --checkpoint_dir=./log/train_MFB --logdir=./log/test_MFB
-python test_enet.py --checkpoint_dir=./log/train_ENet_combined_data --logdir=./log/test_ENet_combined_data
-python test_enet.py --checkpoint_dir=./log/train_MFB_combined_data --logdir=./log/test_MFB_combined_data
+python test_enet.py --dataset_name=CVPRTest --checkpoint_dir=./log/train_CVPR1Noise_ENet_Small_ENET_lr_0.001_bs_10 --logdir=./log/test_CVPR1Noise_ENet_Small_ENET_lr_0.001_bs_10
+

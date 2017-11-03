@@ -13,15 +13,16 @@ flags.DEFINE_string('dataset_name', 'CVPR1Noise', 'The dataset subdirectory to f
 
 FLAGS = flags.FLAGS
 
-dataset_dir = os.path.join(FLAGS.dataset_dir, FLAGS.dataset_name)
+dataset_dir = FLAGS.dataset_dir
+dataset_name = FLAGS.dataset_name
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
-image_files = sorted([os.path.join(dataset_dir, 'train', file) for file in os.listdir(dataset_dir + "/train") if file.endswith('.png')])
-annotation_files = sorted([os.path.join(dataset_dir, "trainannot", file) for file in os.listdir(dataset_dir + "/trainannot") if file.endswith('.png')])
+image_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
+annotation_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
 
-image_val_files = sorted([os.path.join(dataset_dir, 'val', file) for file in os.listdir(dataset_dir + "/val") if file.endswith('.png')])
-annotation_val_files = sorted([os.path.join(dataset_dir, "valannot", file) for file in os.listdir(dataset_dir + "/valannot") if file.endswith('.png')])
+image_val_files = sorted([os.path.join(dataset_dir,'CVPRVal', 'val', file) for file in os.listdir(os.path.join(dataset_dir,'CVPRVal', 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'valannot')) if file.endswith('.png')])
 
 num_files_train = len(image_files)
 

@@ -1,4 +1,5 @@
 import tensorflow as tf
+import skimage.io as io
 from tensorflow.contrib.framework.python.ops.variables import get_or_create_global_step
 from tensorflow.python.platform import tf_logging as logging
 from enet import ENet, ENet_arg_scope, ENet_Small
@@ -85,20 +86,22 @@ dataset_dir = FLAGS.dataset_dir
 dataset_name = FLAGS.dataset_name 
 logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size))
 
-print(dataset_name)
+tfrecords_filename = os.path.join(dataset_dir, dataset_name + '.tfrecords')
+
+print(tfrecords_filename)
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
 image_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
 annotation_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
 
-dataset_name = 'CVPRVal'
-image_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'val', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'val')) if file.endswith('.png')])
-annotation_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'valannot')) if file.endswith('.png')])
+image_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'val', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'valannot')) if file.endswith('.png')])
 
 if combine_dataset:
     image_files += image_val_files
     annotation_files += annotation_val_files
+
 
 #Know the number steps to take before decaying the learning rate and batches per epoch
 num_batches_per_epoch = len(image_files) / batch_size
@@ -120,6 +123,61 @@ elif weighting == "ENET":
 elif weighting == "CVPR":
     class_weights = CVPR_weighing()
     print "========= CVPR Class Weights =========\n", class_weights
+
+def read_and_decode(filename_queue):
+    
+    reader = tf.TFRecordReader()
+
+    _, serialized_example = reader.read(filename_queue)
+
+    features = tf.parse_single_example(
+      serialized_example,
+      # Defaults are not specified since both keys are required.
+      features={
+        'height': tf.FixedLenFeature([], tf.int64),
+        'width': tf.FixedLenFeature([], tf.int64),
+        'image_raw': tf.FixedLenFeature([], tf.string),
+        'mask_raw': tf.FixedLenFeature([], tf.string)
+        })
+
+    # Convert from a scalar string tensor (whose single string has
+    # length mnist.IMAGE_PIXELS) to a uint8 tensor with shape
+    # [mnist.IMAGE_PIXELS].
+    image = tf.decode_raw(features['image_raw'], tf.uint8)
+    annotation = tf.decode_raw(features['mask_raw'], tf.uint8)
+    
+    height = tf.cast(features['height'], tf.int32)
+    width = tf.cast(features['width'], tf.int32)
+    
+    image_shape = tf.pack([height, width, 3])
+    annotation_shape = tf.pack([height, width, 1])
+    
+    image = tf.reshape(image, image_shape)
+    annotation = tf.reshape(annotation, annotation_shape)
+    
+    image_size_const = tf.constant((image_height, image_width, 3), dtype=tf.int32)
+    annotation_size_const = tf.constant((image_height, image_width, 1), dtype=tf.int32)
+    
+    # Random transformations can be put here: right before you crop images
+    # to predefined size. To get more information look at the stackoverflow
+    # question linked above.
+    
+    resized_image = tf.image.resize_image_with_crop_or_pad(image=image,
+                                           target_height=image_height,
+                                           target_width=image_width)
+    
+    resized_annotation = tf.image.resize_image_with_crop_or_pad(image=annotation,
+                                           target_height=image_height,
+                                           target_width=image_width)
+    
+    
+    images, annotations = tf.train.shuffle_batch( [resized_image, resized_annotation],
+                                                 batch_size=batch_size,
+                                                 capacity=batch_size*10,
+                                                 num_threads=32,
+                                                 min_after_dequeue=10)
+    
+    return images, annotations
 
 #============= TRAINING =================
 def weighted_cross_entropy(onehot_labels, logits, class_weights):
@@ -157,6 +215,7 @@ def run():
         tf.logging.set_verbosity(tf.logging.INFO)
 
         #===================TRAINING BRANCH=======================
+	'''
         #Load the files into one input queue
         images = tf.convert_to_tensor(image_files)
         annotations = tf.convert_to_tensor(annotation_files)
@@ -167,10 +226,16 @@ def run():
         image = tf.image.decode_image(image, channels=3)
         annotation = tf.read_file(input_queue[1])
         annotation = tf.image.decode_image(annotation)
-
-        #preprocess and batch up the image and annotation
+        
+	#preprocess and batch up the image and annotation
         preprocessed_image, preprocessed_annotation = preprocess(image, annotation, image_height, image_width)
         images, annotations = tf.train.batch([preprocessed_image, preprocessed_annotation], batch_size=batch_size, allow_smaller_final_batch=True)
+	'''
+
+	filename_queue = tf.train.string_input_producer([tfrecords_filename], num_epochs=num_epochs)
+
+	# Even when reading in multiple threads, share the filename queue.
+	images, annotations = read_and_decode(filename_queue)
 
         #Create the model inference
         with slim.arg_scope(ENet_arg_scope(weight_decay=weight_decay)):
@@ -362,6 +427,8 @@ def run():
 
         # Run the managed session
         with sv.managed_session() as sess:
+    	    #coord = tf.train.Coordinator()
+    	    #threads = tf.train.start_queue_runners(coord=coord)
             for step in xrange(int(num_steps_per_epoch * num_epochs)):
 
                 #At the start of every epoch, show the vital information:
