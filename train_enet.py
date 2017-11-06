@@ -30,6 +30,7 @@ flags.DEFINE_integer('image_height', 88, "The input height of the images.") #360
 flags.DEFINE_integer('image_width', 200, "The input width of the images.") #480
 flags.DEFINE_integer('num_epochs', 100, "The number of epochs to train your model.")
 flags.DEFINE_integer('num_epochs_before_decay', 10, 'The number of epochs before decaying your learning rate.') #100
+flags.DEFINE_integer('decay_steps', 0, 'The number of steps before decaying your learning rate.') 
 flags.DEFINE_float('weight_decay', 2e-4, "The weight decay for ENet convolution layers.")
 flags.DEFINE_float('learning_rate_decay_factor', 1e-1, 'The learning rate decay factor.')
 flags.DEFINE_float('initial_learning_rate', 5e-5, 'The initial learning rate for your training.') #5e-4
@@ -102,7 +103,12 @@ if combine_dataset:
 #Know the number steps to take before decaying the learning rate and batches per epoch
 num_batches_per_epoch = len(image_files) / batch_size
 num_steps_per_epoch = num_batches_per_epoch
-decay_steps = int(num_epochs_before_decay * num_steps_per_epoch)
+
+if (FLAGS.decay_steps > 0):
+    decay_steps = FLAGS.decay_steps
+else:
+    decay_steps = int(num_epochs_before_decay * num_steps_per_epoch)
+
 
 #=================CLASS WEIGHTS===============================
 #Median frequency balancing class_weights

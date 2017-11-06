@@ -100,9 +100,9 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'CVPR02Noise'
+  name = 'CVPR25Noise'
   dataset_dir = './dataset/'
-  in_dir = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR02Noise/SeqTrain/'
+  in_dir = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR25Noise/SeqTrain/'
 
   out_dir = dataset_dir + name + '/'
 
