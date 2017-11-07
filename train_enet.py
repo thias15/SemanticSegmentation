@@ -16,7 +16,8 @@ flags = tf.app.flags
 
 #Directory arguments
 flags.DEFINE_string('dataset_dir', './dataset', 'The dataset base directory.')
-flags.DEFINE_string('dataset_name', 'Carla', 'The dataset subdirectory to find the train, validation and test images.')
+flags.DEFINE_string('dataset_name', 'Carla', 'The dataset subdirectory to find the train images.')
+flags.DEFINE_string('validation_name', 'CVPRVal', 'The dataset subdirectory to find validation images.')
 flags.DEFINE_string('logdir', './log', 'The log directory to save your checkpoint and event files.')
 flags.DEFINE_boolean('save_images', True, 'Whether or not to save your images.')
 flags.DEFINE_boolean('combine_dataset', False, 'If True, combines the validation with the train dataset.')
@@ -79,22 +80,25 @@ weighting = FLAGS.weighting
 
 #Visualization and where to save images
 save_images = FLAGS.save_images
-photo_dir = os.path.join(FLAGS.logdir, "images")
 
 #Directories
 dataset_dir = FLAGS.dataset_dir
 dataset_name = FLAGS.dataset_name 
+validation_name = FLAGS.validation_name
 logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size))
 
-print(dataset_name)
+photo_dir = os.path.join(logdir, "images")
+
+print('Dataset: ',dataset_name)
+print('Validation: ',validation_name)
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
 image_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
 annotation_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
 
-image_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'val', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'val')) if file.endswith('.png')])
-annotation_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'valannot')) if file.endswith('.png')])
+image_val_files = sorted([os.path.join(dataset_dir, validation_name, 'val', file) for file in os.listdir(os.path.join(dataset_dir, validation_name, 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, validation_name, 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, validation_name, 'valannot')) if file.endswith('.png')])
 
 if combine_dataset:
     image_files += image_val_files

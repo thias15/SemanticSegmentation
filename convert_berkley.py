@@ -1,9 +1,13 @@
 import os
+import scipy
+import numpy as np
+from PIL import Image
 
 dataset_dir = '/home/matthias/Downloads/segmentation/'
-dataset_name 'train'
+save_path_rgb = '/media/matthias/7E0CF8640CF818BB/Github/SemanticSegmentation/dataset/Berkeley/train/'
+save_path_seg = '/media/matthias/7E0CF8640CF818BB/Github/SemanticSegmentation/dataset/Berkeley/trainannot/'
+dataset_name = 'train'
 
-image_cut =[60,700]
 number_of_seg_classes = 5
 classes_join ={0:2,1:2,2:2,3:2,4:2,5:4,6:4,7:4,8:3,9:2,10:2,11:2,12:2,13:2,14:2,15:2,16:2,17:2,18:3,19:2,20:2,21:2,22:2,23:2,24:2,25:2,26:2,27:2,28:2,27:2,28:2,29:2,30:2,31:0,32:0,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1}
 '''
@@ -53,10 +57,8 @@ truck			40
 def join_classes(labels_image,join_dic):
   
   compressed_labels_image = np.copy(labels_image) 
-  for key,value in join_dic.iteritems():
+  for key,value in join_dic.items():
     compressed_labels_image[np.where(labels_image==key)] = value
-
-
   return compressed_labels_image
 
 #Dataset directories
@@ -64,10 +66,18 @@ image_files = sorted([os.path.join(dataset_dir, dataset_name, 'raw_images', file
 
 annotation_files = sorted([os.path.join(dataset_dir, dataset_name, "class_id", file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, "class_id")) if file.endswith('.png')])
 
+print (len(image_files))
 
+for i in range (len(image_files)):
+	print('Progress: ', str(i+1), ' of ', str(len(image_files)))
+	image = Image.open(image_files[i])
+	image = image.crop((0, 150, 1280, 710))
+	image = image.resize((200,88),resample = Image.BICUBIC)
+	image.save(save_path_rgb + "rgb_" + str(i) + ".png")
 
-for
+	seg = Image.open(annotation_files[i])
+	seg = seg.crop((0, 160, 1280, 720))
+	seg = seg.resize((200,88),resample = Image.NEAREST)
+	seg_joined = join_classes(np.array(seg),classes_join)
+	Image.fromarray(seg_joined).save(save_path_seg + "seg_" + str(i) + ".png")
 
-image = image_files[i][self._image_cut[0]:self._image_cut[1],:,:3]
-
-join_classes(annotation,classes_join)

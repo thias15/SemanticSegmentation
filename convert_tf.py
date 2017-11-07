@@ -8,21 +8,23 @@ import skimage.io as io
 flags = tf.app.flags
 
 #Directory arguments
-flags.DEFINE_string('dataset_dir', './dataset', 'The dataset base directory.')
-flags.DEFINE_string('dataset_name', 'CVPR1Noise', 'The dataset subdirectory to find the train, validation and test images.')
+flags.DEFINE_string('dataset_dir', './dataset/', 'The dataset base directory.')
+flags.DEFINE_string('dataset_name', 'CVPR5Noise', 'The dataset subdirectory to find the train images.')
+flags.DEFINE_string('validation_name', 'CVPRVal', 'The dataset subdirectory to find validation images.')
 
 FLAGS = flags.FLAGS
 
 dataset_dir = FLAGS.dataset_dir
 dataset_name = FLAGS.dataset_name
+validation_name = FLAGS.validation_name
 
 #===============PREPARATION FOR TRAINING==================
 #Get the images into a list
 image_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
 annotation_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
 
-image_val_files = sorted([os.path.join(dataset_dir,'CVPRVal', 'val', file) for file in os.listdir(os.path.join(dataset_dir,'CVPRVal', 'val')) if file.endswith('.png')])
-annotation_val_files = sorted([os.path.join(dataset_dir, 'CVPRVal', 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'valannot')) if file.endswith('.png')])
+image_val_files = sorted([os.path.join(dataset_dir, validation_name, 'val', file) for file in os.listdir(os.path.join(dataset_dir,'CVPRVal', 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, validation_name, 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, 'CVPRVal', 'valannot')) if file.endswith('.png')])
 
 num_files_train = len(image_files)
 
@@ -39,8 +41,8 @@ def _bytes_feature(value):
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
-tfrecords_filename_train = dataset_dir + '_train.tfrecords'
-tfrecords_filename_val = dataset_dir + '_val.tfrecords'
+tfrecords_filename_train = dataset_dir + dataset_name + '_train.tfrecords'
+tfrecords_filename_val = dataset_dir + validation_name + '_val.tfrecords'
 
 
 writer_train = tf.python_io.TFRecordWriter(tfrecords_filename_train)
@@ -137,6 +139,7 @@ for original_pair, reconstructed_pair in zip(original_images, reconstructed_imag
     print('Images identical: ', np.allclose(*img_pair_to_compare))
     print('Annotations identical: ', np.allclose(*annotation_pair_to_compare))
 
+'''
 ###Validation
 num_files_val = len(image_val_files)
 
@@ -176,4 +179,4 @@ for i in range(num_files_val):
     writer_val.write(example.SerializeToString())
 
 writer_val.close()
-
+'''
