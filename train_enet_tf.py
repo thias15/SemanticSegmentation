@@ -153,8 +153,8 @@ def read_and_decode(filename_queue):
     height = tf.cast(features['height'], tf.int32)
     width = tf.cast(features['width'], tf.int32)
     
-    image_shape = tf.pack([height, width, 3])
-    annotation_shape = tf.pack([height, width, 1])
+    image_shape = tf.stack([height, width, 3])
+    annotation_shape = tf.stack([height, width, 1])
     
     image = tf.reshape(image, image_shape)
     annotation = tf.reshape(annotation, annotation_shape)
@@ -431,8 +431,8 @@ def run():
 
         # Run the managed session
         with sv.managed_session() as sess:
-    	    #coord = tf.train.Coordinator()
-    	    #threads = tf.train.start_queue_runners(coord=coord)
+    	    coord = tf.train.Coordinator()
+    	    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             for step in xrange(int(num_steps_per_epoch * num_epochs)):
 
                 #At the start of every epoch, show the vital information:

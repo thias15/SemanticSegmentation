@@ -1,5 +1,6 @@
 visualizations
 log
+log_old
 dataset
 checkpoint
 *.pyc

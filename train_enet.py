@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib.framework.python.ops.variables import get_or_create_global_step
 from tensorflow.python.platform import tf_logging as logging
 from enet import ENet, ENet_arg_scope, ENet_Small
-from erfnet import ErfNet, ErfNet_Small
+from erfnet import ErfNet, ErfNet_Small, ErfNet_NoDS
 from preprocessing import preprocess
 from get_class_weights import ENet_weighing, median_frequency_balancing, CVPR_weighing
 import os
@@ -25,7 +25,7 @@ flags.DEFINE_boolean('combine_dataset', False, 'If True, combines the validation
 #Training arguments
 flags.DEFINE_string('network', 'ENet_Small', 'The type of network to use.') 
 flags.DEFINE_integer('num_classes', 5, 'The number of classes to predict.') #12
-flags.DEFINE_integer('batch_size', 50, 'The batch_size for training.') #10
+flags.DEFINE_integer('batch_size', 10, 'The batch_size for training.') #10
 flags.DEFINE_integer('eval_batch_size', 20, 'The batch size used for validation.') #25
 flags.DEFINE_integer('image_height', 88, "The input height of the images.") #360
 flags.DEFINE_integer('image_width', 200, "The input width of the images.") #480
@@ -221,6 +221,15 @@ def run():
                                          is_training=True,
                                          reuse=None)
 
+	    if (network == 'ErfNet_NoDS'):
+		print ('Building the network: ' , network)
+                logits, probabilities = ErfNet_NoDS(images,
+                                         num_classes,
+                                         batch_size=batch_size,
+                                         is_training=True,
+                                         reuse=None)
+
+
         #perform one-hot-encoding on the ground truth annotation to get same shape as the logits
         annotations = tf.reshape(annotations, shape=[batch_size, image_height, image_width])
         annotations_ohe = tf.one_hot(annotations, num_classes, axis=-1)
@@ -250,7 +259,11 @@ def run():
         predictions = tf.argmax(probabilities, -1)
         accuracy, accuracy_update = tf.contrib.metrics.streaming_accuracy(predictions, annotations)
         mean_IOU, mean_IOU_update = tf.contrib.metrics.streaming_mean_iou(predictions=predictions, labels=annotations, num_classes=num_classes)
-        metrics_op = tf.group(accuracy_update, mean_IOU_update)
+
+	weights = annotations_ohe * class_weights
+	weights = tf.reduce_sum(weights, 3)
+        mean_iIOU, mean_iIOU_update = tf.contrib.metrics.streaming_mean_iou(predictions=predictions, labels=annotations, num_classes=num_classes, weights = weights)
+        metrics_op = tf.group(accuracy_update, mean_IOU_update,mean_iIOU_update)
 
         #Now we need to create a training step function that runs both the train_op, metrics_op and updates the global_step concurrently.
         def train_step(sess, train_op, global_step, metrics_op, print_step):
@@ -259,14 +272,14 @@ def run():
             '''
             #Check the time for each sess run
             start_time = time.time()
-            total_loss, global_step_count, accuracy_val, mean_IOU_val, _ = sess.run([train_op, global_step, accuracy, mean_IOU, metrics_op])
+            total_loss, global_step_count, accuracy_value, mean_IOU_value, mean_iIOU_value, _ = sess.run([train_op, global_step, accuracy, mean_IOU, mean_iIOU, metrics_op])
             time_elapsed = time.time() - start_time
 
             #Run the logging to show some results
 	    if (global_step_count % print_step == 0):
-                logging.info('global step %s: loss: %.4f (%.2f sec/step)    Current Streaming Accuracy: %.4f    Current Mean IOU: %.4f', global_step_count, total_loss, time_elapsed, accuracy_val, mean_IOU_val)
+                logging.info('global step %s: loss: %.4f (%.2f sec/step)    Accuracy: %.4f    Mean IOU: %.4f    Mean iIOU: %.4f', global_step_count, total_loss, time_elapsed, accuracy_value, mean_IOU_value, mean_iIOU_value)
 
-            return total_loss, accuracy_val, mean_IOU_val
+            return total_loss, accuracy_value, mean_IOU_value, mean_iIOU_value
 
         #================VALIDATION BRANCH========================
         #Load the files into one input queue
@@ -321,6 +334,13 @@ def run():
                                          is_training=True,
                                          reuse=True)
 
+	    if (network == 'ErfNet_NoDS'):
+
+                logits_val, probabilities_val = ErfNet_NoDS(images_val,
+                                         num_classes,
+                                         batch_size=eval_batch_size,
+                                         is_training=True,
+                                         reuse=True)
 
         #perform one-hot-encoding on the ground truth annotation to get same shape as the logits
         annotations_val = tf.cast(annotations_val, dtype=tf.int32)
@@ -331,7 +351,11 @@ def run():
         predictions_val = tf.argmax(probabilities_val, -1)
         accuracy_val, accuracy_val_update = tf.contrib.metrics.streaming_accuracy(predictions_val, annotations_val)
         mean_IOU_val, mean_IOU_val_update = tf.contrib.metrics.streaming_mean_iou(predictions=predictions_val, labels=annotations_val, num_classes=num_classes)
-        metrics_op_val = tf.group(accuracy_val_update, mean_IOU_val_update)
+
+	weights_val = annotations_ohe_val * class_weights
+	weights_val = tf.reduce_sum(weights_val, 3)
+        mean_iIOU_val, mean_iIOU_val_update = tf.contrib.metrics.streaming_mean_iou(predictions=predictions_val, labels=annotations_val, num_classes=num_classes, weights = weights_val)
+        metrics_op_val = tf.group(accuracy_val_update, mean_IOU_val_update, mean_iIOU_val_update)
 
         #Create an output for showing the segmentation output of validation images
         segmentation_output_val = tf.cast(predictions_val, dtype=tf.float32)
@@ -339,18 +363,18 @@ def run():
         segmentation_ground_truth_val = tf.cast(annotations_val, dtype=tf.float32)
         segmentation_ground_truth_val = tf.reshape(segmentation_ground_truth_val, shape=[-1, image_height, image_width, 1])
 
-        def eval_step(sess, metrics_op):
+        def eval_step(sess, metrics_op_val):
             '''
             Simply takes in a session, runs the metrics op and some logging information.
             '''
             start_time = time.time()
-            _, accuracy_value, mean_IOU_value = sess.run([metrics_op, accuracy_val, mean_IOU_val])
+            accuracy_value, mean_IOU_value, mean_iIOU_value, _ = sess.run([accuracy_val, mean_IOU_val, mean_iIOU_val, metrics_op_val])
             time_elapsed = time.time() - start_time
 
             #Log some information
-            logging.info('---VALIDATION--- Validation Accuracy: %.4f    Validation Mean IOU: %.4f    (%.2f sec/step)', accuracy_value, mean_IOU_value, time_elapsed)
+            logging.info('---VALIDATION--- Validation Accuracy: %.4f    Validation Mean IOU: %.4f    Validation Mean iIOU: %.4f	(%.2f sec/step)', accuracy_value, mean_IOU_value, mean_iIOU_value, time_elapsed)
 
-            return accuracy_value, mean_IOU_value
+            return accuracy_value, mean_IOU_value, mean_iIOU_value
 
         #=====================================================
 
@@ -360,6 +384,8 @@ def run():
         tf.summary.scalar('Monitor/training_accuracy', accuracy)
         tf.summary.scalar('Monitor/validation_mean_IOU', mean_IOU_val)
         tf.summary.scalar('Monitor/training_mean_IOU', mean_IOU)
+        tf.summary.scalar('Monitor/validation_mean_iIOU', mean_iIOU_val)
+        tf.summary.scalar('Monitor/training_mean_iIOU', mean_iIOU)
         tf.summary.scalar('Monitor/learning_rate', lr)
         tf.summary.image('Images/Validation_original_image', images_val, max_outputs=1)
         tf.summary.image('Images/Validation_segmentation_output', segmentation_output_val, max_outputs=1)
@@ -367,7 +393,7 @@ def run():
         my_summary_op = tf.summary.merge_all()
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
-        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=20,keep_checkpoint_every_n_hours=8),init_fn=None)
+        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=20),init_fn=None)
 
         # Run the managed session
         with sv.managed_session() as sess:
@@ -379,21 +405,21 @@ def run():
                     learning_rate_value = sess.run([lr])
                     logging.info('Current Learning Rate: %s', learning_rate_value)
             	
-                #Log the summaries every log_step steps or every end of epoch, which ever lower.
-                if step % min(num_steps_per_epoch, log_step) == 0:
-                    loss, training_accuracy, training_mean_IOU = train_step(sess, train_op, sv.global_step, metrics_op=metrics_op,print_step=print_step)
+		#Check the validation data every val_step steps
+		if ((step+1) % val_step == 0):
+		    #for i in xrange(len(image_val_files) / eval_batch_size):
+		    validation_accuracy, validation_mean_IOU, validation_mean_iIOU = eval_step(sess, metrics_op_val)
 
-                    #Check the validation data every val_step steps
-                    if step % val_step == 0:
-                        #for i in xrange(len(image_val_files) / eval_batch_size):
-                        validation_accuracy, validation_mean_IOU = eval_step(sess, metrics_op_val)
+                #Log the summaries every log_step
+                if ((step+1) % log_step == 0):
+                    loss, training_accuracy, training_mean_IOU, training_mean_iIOU = train_step(sess, train_op, sv.global_step, metrics_op=metrics_op,print_step=print_step)
 
                     summaries = sess.run(my_summary_op)
                     sv.summary_computed(sess, summaries)
                     
                 #If not, simply run the training step
                 else:
-                    loss, training_accuracy,training_mean_IOU = train_step(sess, train_op, sv.global_step, metrics_op=metrics_op,print_step=print_step)
+                    loss, training_accuracy,training_mean_IOU, training_mean_iIOU = train_step(sess, train_op, sv.global_step, metrics_op=metrics_op,print_step=print_step)
 
 
 		#Save checkpoint every checkpoint_step steps
@@ -405,8 +431,10 @@ def run():
             logging.info('Final Loss: %s', loss)
             logging.info('Final Training Accuracy: %s', training_accuracy)
             logging.info('Final Training Mean IOU: %s', training_mean_IOU)
+            logging.info('Final Training Mean iIOU: %s', training_mean_iIOU)
             logging.info('Final Validation Accuracy: %s', validation_accuracy)
             logging.info('Final Validation Mean IOU: %s', validation_mean_IOU)
+            logging.info('Final Validation Mean iIOU: %s', validation_mean_iIOU)
 
             #Once all the training has been done, save the log files and checkpoint model
             logging.info('Finished training! Saving model to disk now.')

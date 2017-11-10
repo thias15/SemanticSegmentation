@@ -45,6 +45,15 @@ def spatial_dropout(x, p, seed, scope, is_training=True):
     return x
 
 @slim.add_arg_scope
+def filter_scale(inputs, output_depth, is_training=True, scope='filter_scale'):
+
+    net = slim.conv2d(inputs, output_depth, [3,3], activation_fn=None, scope=scope+'_conv')
+    net = slim.batch_norm(net, is_training=is_training, fused=None, scope=scope+'_batch_norm')
+    net = tf.nn.relu(net, name=scope+'_relu')
+
+    return net
+
+@slim.add_arg_scope
 def downsampler(inputs, output_depth, is_training=True, scope='downsampler'):
     '''
     INPUTS:
@@ -127,14 +136,14 @@ def non_bottleneck(inputs,
     #First conv block - asymmetric convolution
     net = slim.conv2d(inputs, output_depth, [filter_size, 1], scope=scope+'_conv1a')
     net = tf.nn.relu(net, name=scope+'_relu1a')
-    net = slim.conv2d(inputs, output_depth, [1,filter_size], scope=scope+'_conv1b')
+    net = slim.conv2d(net, output_depth, [1,filter_size], scope=scope+'_conv1b')
     net = slim.batch_norm(net, is_training=is_training, fused=None, scope=scope+'_batch_norm1')
     net = tf.nn.relu(net, name=scope+'_relu1b')
 
     #Second conv block - asymmetric + dilation convolution
-    net = slim.conv2d(inputs, output_depth, [filter_size, 1], rate=[dilation_rate,1], scope=scope+'_conv2a')
+    net = slim.conv2d(net, output_depth, [filter_size, 1], rate=[dilation_rate,1], scope=scope+'_conv2a')
     net = tf.nn.relu(net, name=scope+'_relu2a')
-    net = slim.conv2d(inputs, output_depth, [1,filter_size], rate=[1,dilation_rate], scope=scope+'_conv2b')
+    net = slim.conv2d(net, output_depth, [1,filter_size], rate=[1,dilation_rate], scope=scope+'_conv2b')
     net = slim.batch_norm(net, is_training=is_training, fused=None, scope=scope+'_batch_norm2')
 
     #Regularizer
@@ -265,4 +274,71 @@ def ErfNet_Small(inputs,
 
         return logits, probabilities
 
+def ErfNet_NoDS(inputs,
+         num_classes,
+         batch_size,
+         reuse=None,
+         is_training=True,
+         scope='ErfNet'):
+    '''
+    The ErfNet model for real-time semantic segmentation!
+
+    INPUTS:
+    - inputs(Tensor): a 4D Tensor of shape [batch_size, image_height, image_width, num_channels] that represents one batch of preprocessed images.
+    - num_classes(int): an integer for the number of classes to predict. This will determine the final output channels as the answer.
+    - batch_size(int): the batch size to explictly set the shape of the inputs in order for operations to work properly.
+    - reuse(bool): Whether or not to reuse the variables for evaluation.
+    - is_training(bool): if True, switch on batch_norm and prelu only during training, otherwise they are turned off.
+    - scope(str): a string that represents the scope name for the variables.
+
+    OUTPUTS:
+    - net(Tensor): a 4D Tensor output of shape [batch_size, image_height, image_width, num_classes], where each pixel has a one-hot encoded vector
+                      determining the label of the pixel.
+    '''
+    #Set the shape of the inputs first to get the batch_size information
+    inputs_shape = inputs.get_shape().as_list()
+    inputs.set_shape(shape=(batch_size, inputs_shape[1], inputs_shape[2], inputs_shape[3]))
+
+    with tf.variable_scope(scope, reuse=reuse):
+        #Set the primary arg scopes. Fused batch_norm is faster than normal batch norm.
+        with slim.arg_scope([downsampler, upsampler, non_bottleneck], is_training=is_training),\
+             slim.arg_scope([slim.batch_norm], fused=True), \
+             slim.arg_scope([slim.conv2d, slim.conv2d_transpose], activation_fn=None): 
+            #=================START=================
+            #net = downsampler(inputs, output_depth=16, is_training=True, scope='downsampler_1')
+	    #net = downsampler(net, output_depth=64, is_training=True, scope='downsampler_2')
+	    net = filter_scale(inputs, output_depth = 16, is_training=True, scope='filter_scale_1')
+	    net = filter_scale(net, output_depth = 64, is_training=True, scope='filter_scale_2')
+
+	    for i in range(3, 8):    #5 times
+	        net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0.03, scope='non_bottleneck_'+str(i))
+
+	    #net = downsampler(net, output_depth=128, is_training=True, scope='downsampler_8')
+	    net = filter_scale(net, output_depth = 128, is_training=True, scope='filter_scale_8')
+
+	    for i in range(0, 2):    #2 times
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=2,regularizer_prob=0.3, scope='non_bottleneck_'+str(9+i*4))
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=4,regularizer_prob=0.3, scope='non_bottleneck_'+str(10+i*4))
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=8,regularizer_prob=0.3, scope='non_bottleneck_'+str(11+i*4))
+	        net = non_bottleneck(net, output_depth = 128,filter_size=3,dilation_rate=16,regularizer_prob=0.3, scope='non_bottleneck_'+str(12+i*4))
+
+	    #net = upsampler(net, output_depth=64, is_training=True, scope='upsampler_17')
+	    net = filter_scale(net, output_depth = 64, is_training=True, scope='filter_scale_17')
+
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_18')
+	    net = non_bottleneck(net, output_depth = 64,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_19')
+
+	    #net = upsampler(net, output_depth=16, is_training=True, scope='upsampler_20')
+	    net = filter_scale(net, output_depth=16, is_training=True, scope='filter_scale_20')
+	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_21')
+	    net = non_bottleneck(net, output_depth = 16,filter_size=3,dilation_rate=1,regularizer_prob=0, scope='non_bottleneck_22')
+
+	    #logits = upsampler(net, output_depth=num_classes, is_training=True, scope='upsampler_23')
+	    logits = filter_scale(net, output_depth=num_classes, is_training=True, scope='filter_scale_23')
+
+            #=============END=============
+
+            probabilities = tf.nn.softmax(logits, name='logits_to_softmax')
+
+        return logits, probabilities
 
