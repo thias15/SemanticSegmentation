@@ -100,9 +100,10 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'CVPR25Noise'
+  name = 'RCTest' #'CVPR25Noise'
   dataset_dir = './dataset/'
-  in_dir = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR25Noise/SeqTrain/'
+  #in_dir = '/media/matthias/7E0CF8640CF818BB/Github/ModularEnd2End/Desktop/CVPR25Noise/SeqTrain/'
+  in_dir = '/media/matthias/7E0CF8640CF818BB/Datasets/RCTruck/8_Outdoors_4/'
 
   out_dir = dataset_dir + name + '/'
 
@@ -146,17 +147,17 @@ if __name__ == "__main__":
 
     print " SEQUENCE NUMBER ",h_num
     data = h5py.File(os.path.join(in_dir,'data_' + str(h_num).zfill(5) + '.h5'), "r")
-    print(data['rgb'].shape)
-    print(data['labels'].shape)
+    #print(data['rgb'].shape)
+    #print(data['labels'].shape)
 
    
-    for i in range(0,200):
-      
-      rgb = data['rgb'][i]
-      if (outdim == 1):
+    for i in range(1,200):
+      rgb = data['images_center'][i]
+      #rgb = data['rgb'][i]
+      #if (outdim == 1):
         #scene_seg_raw = data['labels'][i][:,:,0] #*int(255/(number_of_seg_classes-1))
         #scene_seg = join_classes(scene_seg_raw,join_dic)
-	scene_seg = data['labels'][i][:,:,0]/int(255/(number_of_seg_classes-1))
+	#scene_seg = data['labels'][i][:,:,0]/int(255/(number_of_seg_classes-1))
 
       if (outdim == 3):
 	scene_seg = np.zeros((100,200,3))
@@ -207,6 +208,6 @@ if __name__ == "__main__":
       	  Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + "_W8.png") 
       '''
       Image.fromarray(rgb).save(trainPath + name + "_rgb_" + str(i+h_num*200) + ".png")
-      Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
+      #Image.fromarray(scene_seg).save(trainAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
       #Image.fromarray(rgb).save(valPath + name + "_rgb_" + str(i+h_num*200) + ".png")
       #Image.fromarray(scene_seg).save(valAnnotPath + name + "_seg_" + str(i+h_num*200) + ".png") 
