@@ -7,7 +7,7 @@ dataset_dir = '/media/matthias/7E0CF8640CF818BB/Datasets/Cityscapes/'
 #save_path_seg = '/media/matthias/7E0CF8640CF818BB/Github/SemanticSegmentation/dataset/CityscapesCoarse/trainannot/'
 save_path_rgb = '/media/matthias/7E0CF8640CF818BB/Github/SemanticSegmentation/dataset/RSSCityscapes2c/train/'
 save_path_seg = '/media/matthias/7E0CF8640CF818BB/Github/SemanticSegmentation/dataset/RSSCityscapes2c/trainannot/'
-dataset_name = 'val'
+dataset_name = 'train_extra'
 
 if not os.path.exists(save_path_rgb):
     os.makedirs(save_path_rgb)

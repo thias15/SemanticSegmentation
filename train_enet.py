@@ -36,8 +36,8 @@ flags.DEFINE_float('weight_decay', 2e-4, "The weight decay for ENet convolution 
 flags.DEFINE_float('learning_rate_decay_factor', 1e-1, 'The learning rate decay factor.')
 flags.DEFINE_float('initial_learning_rate', 5e-5, 'The initial learning rate for your training.') #5e-4
 flags.DEFINE_string('weighting', "MFB", 'Choice of Median Frequency Balancing or the custom ENet class weights.')
-flags.DEFINE_string('checkpoint_step', 10000, 'Number of steps between checkpoints.')
-flags.DEFINE_string('log_step', 100, 'Number of steps between logs.')
+flags.DEFINE_string('checkpoint_step', 100, 'Number of steps between checkpoints.')
+flags.DEFINE_string('log_step', 1000, 'Number of steps between logs.')
 flags.DEFINE_string('print_step', 50, 'Number of steps between prints.')
 flags.DEFINE_string('val_step', 100, 'Number of steps between validations.')
 
@@ -393,8 +393,8 @@ def run():
         my_summary_op = tf.summary.merge_all()
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
-        #sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=20, keep_checkpoint_every_n_hours=24),init_fn=None)
-	sv = tf.train.Supervisor(logdir=logdir, summary_op=None,init_fn=None)
+        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=50, keep_checkpoint_every_n_hours=24),init_fn=None, save_model_secs=0)
+	#sv = tf.train.Supervisor(logdir=logdir, summary_op=None,init_fn=None, save_model_secs=0)
 
         # Run the managed session
         with sv.managed_session() as sess:
