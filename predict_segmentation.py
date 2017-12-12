@@ -19,7 +19,7 @@ num_initial_blocks = 1
 skip_connections = False
 stage_two_repeat = 1
 batch_size = 1 #10
-num_classes = 5 #12
+num_classes = 2 #12
 image_height = 88
 image_width = 200
 
@@ -52,6 +52,11 @@ Car = [0,  0, 142] - blue
 Obstacle = [255, 255, 0] - yellow
 Sidewalk = [0, 255, 255] - cyan 
 Road = [128, 64, 128] - purple 
+
+Classes - Carla_2:
+------------
+Background = [255, 255, 0] - yellow
+Road = [128, 64, 128] - purple 
 '''
 
 encoding_camvid = {0: [128,128,128],
@@ -73,7 +78,10 @@ encoding_carla_5 = {0: [220, 20, 60],
                      3: [0, 255, 255],
                      4: [128, 64, 128]}
 
-label_to_colours =  encoding_carla_5  
+encoding_carla_2 = {0: [255, 255, 0],
+                    1: [128, 64, 128]}
+
+label_to_colours =  encoding_carla_2  
 
 #Create the photo directory
 photo_dir = checkpoint_dir + "/test_images"
