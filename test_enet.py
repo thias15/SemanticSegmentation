@@ -21,7 +21,7 @@ flags.DEFINE_string('logdir', './log/test', 'The log directory for event files c
 flags.DEFINE_boolean('save_images', True, 'If True, saves 10 images to your logdir for visualization.')
 
 #Evaluation information
-flags.DEFINE_string('network', 'ENet_Small', 'The type of network to use.') 
+flags.DEFINE_string('network', 'ErfNet_Small', 'The type of network to use.') 
 flags.DEFINE_integer('num_classes', 5, 'The number of classes to predict.') #12
 flags.DEFINE_integer('batch_size', 1, 'The batch_size for evaluation.') #10
 flags.DEFINE_integer('image_height', 88, "The input height of the images.") #360
@@ -56,6 +56,9 @@ checkpoint_dir = FLAGS.checkpoint_dir
 photo_dir = os.path.join(FLAGS.logdir, "images")
 logdir = FLAGS.logdir
 
+is_training = False
+save_step = 1
+
 #===============PREPARATION FOR TRAINING==================
 #Checkpoint directories
 checkpoint_file = tf.train.latest_checkpoint(checkpoint_dir)
@@ -66,6 +69,7 @@ annotation_files = sorted([os.path.join(dataset_dir, dataset_name, "testannot", 
 
 num_batches_per_epoch = len(image_files) / batch_size
 num_steps_per_epoch = num_batches_per_epoch
+
 
 #=============EVALUATION=================
 def run():
@@ -95,7 +99,7 @@ def run():
                 logits, probabilities = ENet(images,
                                          num_classes,
                                          batch_size=batch_size,
-                                         is_training=False,
+                                         is_training=is_training,
                                          reuse=None,
                                          num_initial_blocks=num_initial_blocks,
                                          stage_two_repeat=stage_two_repeat,
@@ -106,7 +110,7 @@ def run():
                 logits, probabilities = ENet_Small(images,
                                          num_classes,
                                          batch_size=batch_size,
-                                         is_training=False,
+                                         is_training=is_training,
                                          reuse=None,
                                          num_initial_blocks=num_initial_blocks,
                                          skip_connections=skip_connections)
@@ -116,7 +120,7 @@ def run():
                 logits, probabilities = ErfNet(images,
                                          num_classes,
                                          batch_size=batch_size,
-                                         is_training=False,
+                                         is_training=is_training,
                                          reuse=None)
 
 	    if (network == 'ErfNet_Small'):
@@ -124,7 +128,7 @@ def run():
                 logits, probabilities = ErfNet_Small(images,
                                          num_classes,
                                          batch_size=batch_size,
-                                         is_training=False,
+                                         is_training=is_training,
                                          reuse=None)
 
         # Set up the variables to restore and restoring function from a saver.
@@ -195,8 +199,13 @@ def run():
                     summaries = sess.run(my_summary_op)
                     sv.summary_computed(sess, summaries)
 
+                   
+                #Otherwise just run as per normal
+                else:
+                    test_accuracy, test_mean_IOU, test_per_class_accuracy = eval_step(sess, metrics_op = metrics_op, global_step = sv.global_step)
+
                 #Save image every 100 steps and continue evaluating
-                if step % 100 == 0:
+                if step % save_step == 0:
                     logging.info('Saving image...')
 		    predictions_val, annotations_val = sess.run([predictions, annotations])
                     predicted_annotation = predictions_val[0]
@@ -206,10 +215,6 @@ def run():
                     plt.subplot(1,2,2)
                     plt.imshow(annotation)
                     plt.savefig(photo_dir+"/image_" + str(step))
-                    
-                #Otherwise just run as per normal
-                else:
-                    test_accuracy, test_mean_IOU, test_per_class_accuracy = eval_step(sess, metrics_op = metrics_op, global_step = sv.global_step)
 
             #At the end of all the evaluation, show the final accuracy
             logging.info('Final Streaming Accuracy: %.4f', test_accuracy)

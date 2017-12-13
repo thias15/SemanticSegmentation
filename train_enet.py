@@ -252,8 +252,11 @@ def run():
         #Now we can define the optimizer that takes on the learning rate
         optimizer = tf.train.AdamOptimizer(learning_rate=lr, epsilon=epsilon)
 
-        #Create the train_op.
-        train_op = slim.learning.create_train_op(total_loss, optimizer)
+	#Add batch norm paramters from update ops as dependency to train op
+	update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+	with tf.control_dependencies(update_ops):
+            #Create the train_op.
+            train_op = slim.learning.create_train_op(total_loss, optimizer)
 
         #State the metrics that you want to predict. We get a predictions that is not one_hot_encoded.
         predictions = tf.argmax(probabilities, -1)
@@ -393,7 +396,7 @@ def run():
         my_summary_op = tf.summary.merge_all()
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
-        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=50, keep_checkpoint_every_n_hours=24),init_fn=None, save_model_secs=0)
+        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, saver=tf.train.Saver(max_to_keep=250, keep_checkpoint_every_n_hours=1000),init_fn=None, save_model_secs=0)
 	#sv = tf.train.Supervisor(logdir=logdir, summary_op=None,init_fn=None, save_model_secs=0)
 
         # Run the managed session

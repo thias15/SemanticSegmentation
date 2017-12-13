@@ -185,7 +185,7 @@ def ErfNet(inputs,
     with tf.variable_scope(scope, reuse=reuse):
         #Set the primary arg scopes. Fused batch_norm is faster than normal batch norm.
         with slim.arg_scope([downsampler, upsampler, non_bottleneck], is_training=is_training),\
-             slim.arg_scope([slim.batch_norm], fused=True, updates_collections=None, decay=0.9), \
+             slim.arg_scope([slim.batch_norm], fused=True, updates_collections=None, decay=0.99), \
              slim.arg_scope([slim.conv2d, slim.conv2d_transpose], activation_fn=None): 
             #=================START=================
             net = downsampler(inputs, output_depth=16, is_training=True, scope='downsampler_1')
@@ -247,7 +247,7 @@ def ErfNet_Small(inputs,
     with tf.variable_scope(scope, reuse=reuse):
         #Set the primary arg scopes. Fused batch_norm is faster than normal batch norm.
         with slim.arg_scope([downsampler, upsampler, non_bottleneck], is_training=is_training),\
-             slim.arg_scope([slim.batch_norm], fused=True, updates_collections=None, decay=0.9), \
+             slim.arg_scope([slim.batch_norm], fused=True, updates_collections=None, decay=0.99), \
              slim.arg_scope([slim.conv2d, slim.conv2d_transpose], activation_fn=None): 
             #=================START=================
             net = downsampler(inputs, output_depth=16, is_training=True, scope='downsampler_1')
@@ -302,7 +302,7 @@ def ErfNet_NoDS(inputs,
     with tf.variable_scope(scope, reuse=reuse):
         #Set the primary arg scopes. Fused batch_norm is faster than normal batch norm.
         with slim.arg_scope([downsampler, upsampler, non_bottleneck], is_training=is_training),\
-             slim.arg_scope([slim.batch_norm], fused=True, updates_collections=None, decay=0.9), \
+             slim.arg_scope([slim.batch_norm], fused=True, updates_collections=None, decay=0.99), \
              slim.arg_scope([slim.conv2d, slim.conv2d_transpose], activation_fn=None): 
             #=================START=================
             #net = downsampler(inputs, output_depth=16, is_training=True, scope='downsampler_1')

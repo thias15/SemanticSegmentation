@@ -8,7 +8,8 @@ from scipy.misc import imsave,imread
 import numpy as np
 slim = tf.contrib.slim
 
-image_dir = './dataset/RCTest/test/'
+#image_dir = './dataset/RCTest/test/'
+image_dir = './dataset/RSSRC2c/test/'
 images_list = sorted([os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')])
 
 checkpoint_dir = "./checkpoint"
@@ -22,6 +23,7 @@ batch_size = 1 #10
 num_classes = 2 #12
 image_height = 88
 image_width = 200
+is_training = True
 
 '''
 #Labels to colours are obtained from here:
@@ -81,7 +83,7 @@ encoding_carla_5 = {0: [220, 20, 60],
 encoding_carla_2 = {0: [255, 255, 0],
                     1: [128, 64, 128]}
 
-label_to_colours =  encoding_carla_2  
+label_to_colours =  encoding_carla_2
 
 #Create the photo directory
 photo_dir = checkpoint_dir + "/test_images"
@@ -118,7 +120,7 @@ with tf.Graph().as_default() as graph:
 	    logits, probabilities = ENet(images,
 	                         num_classes,
 	                         batch_size=batch_size,
-	                         is_training=False,
+	                         is_training=is_training,
 	                         reuse=None,
 	                         num_initial_blocks=num_initial_blocks,
 	                         stage_two_repeat=stage_two_repeat,
@@ -129,7 +131,7 @@ with tf.Graph().as_default() as graph:
 	    logits, probabilities = ENet_Small(images,
 	                         num_classes,
 	                         batch_size=batch_size,
-	                         is_training=False,
+	                         is_training=is_training,
 	                         reuse=None,
 	                         num_initial_blocks=num_initial_blocks,
 	                         skip_connections=skip_connections)
@@ -139,7 +141,7 @@ with tf.Graph().as_default() as graph:
 	    logits, probabilities = ErfNet(images,
 	                         num_classes,
 	                         batch_size=batch_size,
-	                         is_training=False,
+	                         is_training=is_training,
 	                         reuse=None)
 
         if (network == 'ErfNet_Small'):
@@ -147,7 +149,7 @@ with tf.Graph().as_default() as graph:
 	    logits, probabilities = ErfNet_Small(images,
 	                         num_classes,
 	                         batch_size=batch_size,
-	                         is_training=False,
+	                         is_training=is_training,
 	                         reuse=None)
 
     variables_to_restore = slim.get_variables_to_restore()
