@@ -253,10 +253,11 @@ def run():
         optimizer = tf.train.AdamOptimizer(learning_rate=lr, epsilon=epsilon)
 
 	#Add batch norm paramters from update ops as dependency to train op
-	update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-	with tf.control_dependencies(update_ops):
-            #Create the train_op.
-            train_op = slim.learning.create_train_op(total_loss, optimizer)
+	#update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+	#with tf.control_dependencies(update_ops):
+
+        #Create the train_op.
+        train_op = slim.learning.create_train_op(total_loss, optimizer)
 
         #State the metrics that you want to predict. We get a predictions that is not one_hot_encoded.
         predictions = tf.argmax(probabilities, -1)
