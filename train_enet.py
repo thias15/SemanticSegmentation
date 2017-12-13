@@ -26,7 +26,7 @@ flags.DEFINE_boolean('combine_dataset', False, 'If True, combines the validation
 flags.DEFINE_string('network', 'ENet_Small', 'The type of network to use.') 
 flags.DEFINE_integer('num_classes', 5, 'The number of classes to predict.') #12
 flags.DEFINE_integer('batch_size', 10, 'The batch_size for training.') #10
-flags.DEFINE_integer('eval_batch_size', 106, 'The batch size used for validation.') #25
+flags.DEFINE_integer('eval_batch_size', 18, 'The batch size used for validation.') #25
 flags.DEFINE_integer('image_height', 88, "The input height of the images.") #360
 flags.DEFINE_integer('image_width', 200, "The input width of the images.") #480
 flags.DEFINE_integer('num_epochs', 100, "The number of epochs to train your model.")
