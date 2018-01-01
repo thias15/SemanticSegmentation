@@ -71,6 +71,7 @@ num_epochs =FLAGS.num_epochs
 learning_rate_decay_factor = FLAGS.learning_rate_decay_factor
 weight_decay = FLAGS.weight_decay
 epsilon = 1e-8
+max_out_imgs = 10
 
 #Architectural changes
 num_initial_blocks = FLAGS.num_initial_blocks
@@ -363,6 +364,12 @@ def run():
         mean_iIOU_val, mean_iIOU_val_update = tf.contrib.metrics.streaming_mean_iou(predictions=predictions_val, labels=annotations_val, num_classes=num_classes, weights = weights_val)
         metrics_op_val = tf.group(accuracy_val_update, mean_IOU_val_update, mean_iIOU_val_update)
 
+        #Create an output for showing the segmentation output of train images
+        segmentation_output = tf.cast(predictions, dtype=tf.float32)
+        segmentation_output = tf.reshape(segmentation_output, shape=[-1, image_height, image_width, 1])
+        segmentation_ground_truth = tf.cast(annotations, dtype=tf.float32)
+        segmentation_ground_truth = tf.reshape(segmentation_ground_truth, shape=[-1, image_height, image_width, 1])
+
         #Create an output for showing the segmentation output of validation images
         segmentation_output_val = tf.cast(predictions_val, dtype=tf.float32)
         segmentation_output_val = tf.reshape(segmentation_output_val, shape=[-1, image_height, image_width, 1])
@@ -393,9 +400,12 @@ def run():
         tf.summary.scalar('Monitor/validation_mean_iIOU', mean_iIOU_val)
         tf.summary.scalar('Monitor/training_mean_iIOU', mean_iIOU)
         tf.summary.scalar('Monitor/learning_rate', lr)
-        tf.summary.image('Images/Validation_original_image', images_val, max_outputs=1)
-        tf.summary.image('Images/Validation_segmentation_output', segmentation_output_val, max_outputs=1)
-        tf.summary.image('Images/Validation_segmentation_ground_truth', segmentation_ground_truth_val, max_outputs=1)
+        tf.summary.image('Images/Validation_original_image', images, max_outputs=max_out_imgs)
+        tf.summary.image('Images/Validation_segmentation_output', segmentation_output, max_outputs=max_out_imgs)
+        tf.summary.image('Images/Validation_segmentation_ground_truth', segmentation_ground_truth, max_outputs=max_out_imgs)
+        tf.summary.image('Images/Validation_original_image', images_val, max_outputs=max_out_imgs)
+        tf.summary.image('Images/Validation_segmentation_output', segmentation_output_val, max_outputs=max_out_imgs)
+        tf.summary.image('Images/Validation_segmentation_ground_truth', segmentation_ground_truth_val, max_outputs=max_out_imgs)
         my_summary_op = tf.summary.merge_all()
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
