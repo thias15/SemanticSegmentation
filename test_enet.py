@@ -18,7 +18,10 @@ flags.DEFINE_string('dataset_dir', './dataset', 'The dataset base directory.')
 flags.DEFINE_string('dataset_name', 'CVPRTest', 'The dataset subdirectory to find the test images.')
 flags.DEFINE_string('checkpoint_dir', './log/train', 'The checkpoint directory to restore your model')
 flags.DEFINE_string('logdir', './log/test', 'The log directory for event files created during test evaluation.')
-flags.DEFINE_boolean('save_images', True, 'If True, saves 10 images to your logdir for visualization.')
+flags.DEFINE_boolean('save_images', True, 'If True, saves images to your logdir for visualization.')
+flags.DEFINE_boolean('save_step', 100, 'Number of steps for saving images.')
+flags.DEFINE_boolean('combine_val', False, 'If True, combines the validation with the test dataset.')
+flags.DEFINE_boolean('combine_train', False, 'If True, combines the train with the test dataset.')
 
 #Evaluation information
 flags.DEFINE_string('network', 'ErfNet_Small', 'The type of network to use.') 
@@ -42,8 +45,10 @@ batch_size = FLAGS.batch_size
 image_height = FLAGS.image_height
 image_width = FLAGS.image_width
 num_epochs = FLAGS.num_epochs
-
 save_images = FLAGS.save_images
+save_step = FLAGS.save_step
+combine_val = FLAGS.combine_val
+combine_train = FLAGS.combine_train
 
 #Architectural changes
 num_initial_blocks = FLAGS.num_initial_blocks
@@ -57,7 +62,6 @@ photo_dir = os.path.join(FLAGS.logdir, "images")
 logdir = FLAGS.logdir
 
 is_training = False
-save_step = 1
 
 #===============PREPARATION FOR TRAINING==================
 #Checkpoint directories
@@ -66,6 +70,20 @@ checkpoint_file = tf.train.latest_checkpoint(checkpoint_dir)
 #Dataset directories
 image_files = sorted([os.path.join(dataset_dir, dataset_name, 'test', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'test')) if file.endswith('.png')])
 annotation_files = sorted([os.path.join(dataset_dir, dataset_name, "testannot", file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, "testannot")) if file.endswith('.png')])
+
+image_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'val', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'val')) if file.endswith('.png')])
+annotation_val_files = sorted([os.path.join(dataset_dir, dataset_name, 'valannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'valannot')) if file.endswith('.png')])
+
+image_train_files = sorted([os.path.join(dataset_dir, dataset_name, 'train', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'train')) if file.endswith('.png')])
+annotation_train_files = sorted([os.path.join(dataset_dir, dataset_name, 'trainannot', file) for file in os.listdir(os.path.join(dataset_dir, dataset_name, 'trainannot')) if file.endswith('.png')])
+
+
+if combine_val:
+    image_files += image_val_files
+    annotation_files += annotation_val_files
+if combine_train:
+    image_files += image_train_files
+    annotation_files += annotation_train_files
 
 num_batches_per_epoch = len(image_files) / batch_size
 num_steps_per_epoch = num_batches_per_epoch

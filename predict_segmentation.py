@@ -9,7 +9,7 @@ import numpy as np
 slim = tf.contrib.slim
 
 #image_dir = './dataset/RCTest/test/'
-image_dir = './dataset/RSSRC2c/test/'
+image_dir = './dataset/RCSeg/test/'
 images_list = sorted([os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')])
 
 checkpoint_dir = "./checkpoint"
@@ -23,7 +23,7 @@ batch_size = 1 #10
 num_classes = 2 #12
 image_height = 88
 image_width = 200
-is_training = True
+is_training = False
 
 '''
 #Labels to colours are obtained from here:

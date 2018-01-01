@@ -40,6 +40,7 @@ flags.DEFINE_string('checkpoint_step', 1000, 'Number of steps between checkpoint
 flags.DEFINE_string('log_step', 1000, 'Number of steps between logs.')
 flags.DEFINE_string('print_step', 50, 'Number of steps between prints.')
 flags.DEFINE_string('val_step', 1000, 'Number of steps between validations.')
+flags.DEFINE_boolean('aug', False, 'Toggle augmentation of input images.')
 
 #Architectural changes
 flags.DEFINE_integer('num_initial_blocks', 1, 'The number of initial blocks to use in ENet.')
@@ -61,6 +62,7 @@ checkpoint_step = FLAGS.checkpoint_step
 log_step = FLAGS.log_step
 print_step = FLAGS.print_step
 val_step = FLAGS.val_step
+aug = FLAGS.aug
 
 #Training parameters
 initial_learning_rate = FLAGS.initial_learning_rate
@@ -85,7 +87,7 @@ save_images = FLAGS.save_images
 dataset_dir = FLAGS.dataset_dir
 dataset_name = FLAGS.dataset_name 
 validation_name = FLAGS.validation_name
-logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size))
+logdir = os.path.join(FLAGS.logdir,'train_' + FLAGS.dataset_name + '_' + FLAGS.network + '_' + FLAGS.weighting + '_lr_' + str(FLAGS.initial_learning_rate) + '_bs_' + str(FLAGS.batch_size) + '_aug_' + str(FLAGS.aug))
 
 photo_dir = os.path.join(logdir, "images")
 
@@ -178,7 +180,7 @@ def run():
         annotation = tf.image.decode_image(annotation)
 
         #preprocess and batch up the image and annotation
-        preprocessed_image, preprocessed_annotation = preprocess(image, annotation, image_height, image_width)
+        preprocessed_image, preprocessed_annotation = preprocess(image, annotation, image_height, image_width,aug)
         images, annotations = tf.train.batch([preprocessed_image, preprocessed_annotation], batch_size=batch_size, allow_smaller_final_batch=True)
 
         #Create the model inference
