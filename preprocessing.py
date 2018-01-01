@@ -96,8 +96,8 @@ def preprocess(image, annotation=None, height=360, width=480,aug = False):
     image = tf.image.resize_image_with_crop_or_pad(image, height, width)
     image.set_shape(shape=(height, width, 3))
     if aug == True:
-	color_ordering = random.randint(0, 5)
-	fast_mode = random.choice([True, False])
+	color_ordering = 0 #random.randint(0, 5)
+	fast_mode = False #random.choice([True, False])
 	print(color_ordering,fast_mode)
 	if color_ordering < 4:
   	    image = distort_color(image, color_ordering=color_ordering, fast_mode=fast_mode, scope=None)

@@ -71,7 +71,7 @@ num_epochs =FLAGS.num_epochs
 learning_rate_decay_factor = FLAGS.learning_rate_decay_factor
 weight_decay = FLAGS.weight_decay
 epsilon = 1e-8
-max_out_imgs = 10
+max_out_imgs = 3
 
 #Architectural changes
 num_initial_blocks = FLAGS.num_initial_blocks
@@ -400,12 +400,12 @@ def run():
         tf.summary.scalar('Monitor/validation_mean_iIOU', mean_iIOU_val)
         tf.summary.scalar('Monitor/training_mean_iIOU', mean_iIOU)
         tf.summary.scalar('Monitor/learning_rate', lr)
-        tf.summary.image('Images/Validation_original_image', images, max_outputs=max_out_imgs)
-        tf.summary.image('Images/Validation_segmentation_output', segmentation_output, max_outputs=max_out_imgs)
-        tf.summary.image('Images/Validation_segmentation_ground_truth', segmentation_ground_truth, max_outputs=max_out_imgs)
-        tf.summary.image('Images/Validation_original_image', images_val, max_outputs=max_out_imgs)
-        tf.summary.image('Images/Validation_segmentation_output', segmentation_output_val, max_outputs=max_out_imgs)
-        tf.summary.image('Images/Validation_segmentation_ground_truth', segmentation_ground_truth_val, max_outputs=max_out_imgs)
+        tf.summary.image('Images/original_image', images, max_outputs=max_out_imgs)
+        tf.summary.image('Images/segmentation_output', segmentation_output, max_outputs=max_out_imgs)
+        tf.summary.image('Images/segmentation_ground_truth', segmentation_ground_truth, max_outputs=max_out_imgs)
+        tf.summary.image('Images_Val/original_image', images_val, max_outputs=max_out_imgs)
+        tf.summary.image('Images_Val/segmentation_output', segmentation_output_val, max_outputs=max_out_imgs)
+        tf.summary.image('Images_Val/segmentation_ground_truth', segmentation_ground_truth_val, max_outputs=max_out_imgs)
         my_summary_op = tf.summary.merge_all()
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
