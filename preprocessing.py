@@ -53,7 +53,7 @@ def distort_color(image, color_ordering=0, fast_mode=True, scope=None):
     # The random_* ops do not necessarily clamp.
     return tf.clip_by_value(image, 0.0, 1.0)
 
-def preprocess(image, annotation=None, height=360, width=480,aug = False):
+def preprocess(image, annotation=None, height=360, width=480, aug = False):
     '''
     Performs preprocessing for one set of image and annotation for feeding into network.
     NO scaling of any sort will be done as per original paper.

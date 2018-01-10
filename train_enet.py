@@ -37,9 +37,9 @@ flags.DEFINE_float('learning_rate_decay_factor', 1e-1, 'The learning rate decay 
 flags.DEFINE_float('initial_learning_rate', 5e-5, 'The initial learning rate for your training.') #5e-4
 flags.DEFINE_string('weighting', "MFB", 'Choice of Median Frequency Balancing or the custom ENet class weights.')
 flags.DEFINE_string('checkpoint_step', 1000, 'Number of steps between checkpoints.')
-flags.DEFINE_string('log_step', 1000, 'Number of steps between logs.')
+flags.DEFINE_string('log_step', 5000, 'Number of steps between logs.')
 flags.DEFINE_string('print_step', 50, 'Number of steps between prints.')
-flags.DEFINE_string('val_step', 1000, 'Number of steps between validations.')
+flags.DEFINE_string('val_step', 5000, 'Number of steps between validations.')
 flags.DEFINE_boolean('aug', False, 'Toggle augmentation of input images.')
 
 #Architectural changes
