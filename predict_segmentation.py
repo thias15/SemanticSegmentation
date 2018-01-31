@@ -8,8 +8,7 @@ from scipy.misc import imsave,imread
 import numpy as np
 slim = tf.contrib.slim
 
-#image_dir = './dataset/RCTest/test/'
-image_dir = './dataset/RCSeg/test/'
+image_dir = './dataset/RSSMixedBag/test/'
 images_list = sorted([os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')])
 
 checkpoint_dir = "./checkpoint"
@@ -174,10 +173,13 @@ with tf.Graph().as_default() as graph:
 		img = imread(images_list[i])
                 colored_class_image = grayscale_to_colour(segmentations[j])
 		alpha_blended = 0.5 * colored_class_image + 0.5 * img
-		filename = photo_dir + "/image_%s" %(i*batch_size + j)
-		ext = '.png'
+		img_name = images_list[i].split("/") 
+		print (img_name[-1])
+		filename =  photo_dir + "/" + str(img_name[-1])
+		#ext = '.png'
 		#imsave(filename + "_seg" + ext, colored_class_image)
-		imsave(filename + "_seg_blended" + ext, alpha_blended)
+		#imsave(filename + "_seg_blended" + ext, alpha_blended)
+		imsave(filename, alpha_blended)
 
 
 		print 'Saving image %s/%s' %(i*batch_size + j, len(images_list))
