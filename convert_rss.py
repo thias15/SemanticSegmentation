@@ -100,9 +100,9 @@ def join_classes(labels_image,join_dic):
 if __name__ == "__main__":
   
   # Concatenate all files
-  name = 'RCSeg120' #'CVPR25Noise'
+  name = 'CarlaTest' #'CVPR25Noise'
   dataset_dir = './dataset/'
-  in_dir = '/media/matthias/7E0CF8640CF818BB/Github/Desktop/20171219_FOV120_W1_1/'
+  in_dir = '/media/matthias/7E0CF8640CF818BB/Github/Desktop/RC27_wpz_M/'
 
   out_dir = dataset_dir + name + '/'
 
@@ -116,7 +116,9 @@ if __name__ == "__main__":
   files = [os.path.join(in_dir, f) for f in glob.glob1(in_dir, "data_*.h5")]
 
   h5_start = 0
-  h5_last = 10
+  h5_last = 10000
+  h5_step = 1
+  img_step = 100
   bRGB = False
   bSeg = True
   number_of_seg_classes = 2
@@ -142,7 +144,7 @@ if __name__ == "__main__":
     os.mkdir(testAnnotPath)
 
   # Now go over all files   
-  sequence_num = range(h5_start,h5_last+1)
+  sequence_num = range(h5_start,h5_last+1,h5_step)
   for h_num in sequence_num:
 
     print " SEQUENCE NUMBER ",h_num
@@ -151,7 +153,7 @@ if __name__ == "__main__":
     #print(data['labels'].shape)
 
    
-    for i in range(1,200,100):
+    for i in range(1,200,img_step):
       rgb = data['rgb'][i]
       if (outdim == 1):
         scene_seg_raw = data['labels'][i][:,:,0]
